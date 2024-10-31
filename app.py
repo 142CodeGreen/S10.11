@@ -1,8 +1,14 @@
+# Import necessary libraries
+import warnings
+warnings.filterwarnings("ignore", category=LangChainDeprecationWarning, module="llama_index")
+
+#from langchain_core._api.deprecation import LangChainDeprecationWarning
+
 import torch
 import os
 import gradio as gr
 import logging
-from nemoguardrails import RailsConfig
+from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.llm.providers import get_llm_provider
 import asyncio
 
