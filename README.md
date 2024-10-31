@@ -6,8 +6,8 @@ This is a practise of including Nemo Guardrails on top of S1 repository with adj
 
 1. Clone the repository:
 ```
-git clone https://github.com/142CodeGreen/S1.git
-cd S1
+git clone https://github.com/142CodeGreen/S1.2.git
+cd S1.2
 ```
 
 2. Install the required packages:
