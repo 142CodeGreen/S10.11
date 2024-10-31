@@ -1,3 +1,14 @@
+---
+title: S1.2
+emoji: ⚡
+colorFrom: blue
+colorTo: gray
+sdk: gradio
+sdk_version: 5.4.0
+app_file: app.py
+pinned: false
+---
+
 # S1.2
 
 This is a practise of including Nemo Guardrails on top of S1 repository with adjusted code. It's a simple RAG chatbot that allows upload of file then conduct Q&A using NVIDIA NIM.  The RAG orchestration is via LlamaIndex and GPU-accelerated Milvus Vector Store, using NVIDIA embeddings. 
