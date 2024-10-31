@@ -66,8 +66,10 @@ def load_documents(file_objs):
 
         # Initialize NeMo Guardrails after documents are loaded
         config = RailsConfig.from_path("./nemo")
-        llm_provider = get_llm_provider(model_name="meta/llama-3.1-8b-instruct")
-        rails = RailsContext(config=config, llm_provider=llm_provider)
+        rails = LLMRails(config)
+        
+        #llm_provider = get_llm_provider(model_name="meta/llama-3.1-8b-instruct")
+        #rails = RailsContext(config=config, llm_provider=llm_provider)
 
         # Register RAG execution with NeMo Guardrails
         rails.register_action("rag", async lambda context, statements: await query_engine.aquery(context.get("user_input")))
