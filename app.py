@@ -42,7 +42,7 @@ def get_files_from_input(file_objs):
         return []
     return [file_obj.name for file_obj in file_objs]
 
-def load_documents(file_objs):
+async def load_documents(file_objs):
     global index, query_engine, rails
     if index is not None:
         return "Documents already loaded."
@@ -65,24 +65,27 @@ def load_documents(file_objs):
         )
         
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
-        
         index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
-
         query_engine = index.as_query_engine(similarity_top_k=20, streaming=True)
 
-        # Initialize NeMo Guardrails after documents are loaded
+        # Initialize NeMo Guardrails asynchronously
         config = RailsConfig.from_path("./nemo")
         rails = LLMRails(config)
         
-        #llm_provider = get_llm_provider(model_name="meta/llama-3.1-8b-instruct")
-        #rails = RailsContext(config=config, llm_provider=llm_provider)
+        # Define an async function for RAG execution
+        async def run_rag(context, statements):
+            return await query_engine.aquery(context.get("user_input"))
 
         # Register RAG execution with NeMo Guardrails
-        rails.register_action("rag", async lambda context, statements: await query_engine.aquery(context.get("user_input")))
+        rails.register_action("rag", run_rag)
+        
+        # If you want to perform some async action with the rails immediately after setup, you can do:
+        # await rails.some_async_method()
 
         return f"Successfully loaded {len(documents)} documents from {len(file_paths)} files."
     except Exception as e:
         return f"Error loading documents: {str(e)}"
+
 
 async def chat_async(message, history):
     global rails
