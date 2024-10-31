@@ -1,15 +1,11 @@
-# Import necessary libraries
 import warnings
-warnings.filterwarnings("ignore", category=LangChainDeprecationWarning, module="llama_index")
-
-#from langchain_core._api.deprecation import LangChainDeprecationWarning
+warnings.filterwarnings("ignore", category=UserWarning, module="llama_index")
 
 import torch
 import os
 import gradio as gr
 import logging
 from nemoguardrails import LLMRails, RailsConfig
-from nemoguardrails.llm.providers import get_llm_provider
 import asyncio
 
 logging.basicConfig(level=logging.INFO)
@@ -42,7 +38,7 @@ def get_files_from_input(file_objs):
         return []
     return [file_obj.name for file_obj in file_objs]
 
-async def load_documents(file_objs):
+def load_documents(file_objs):
     global index, query_engine, rails
     if index is not None:
         return "Documents already loaded."
@@ -68,33 +64,30 @@ async def load_documents(file_objs):
         index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
         query_engine = index.as_query_engine(similarity_top_k=20, streaming=True)
 
-        # Initialize NeMo Guardrails asynchronously
+        # Initialize NeMo Guardrails synchronously for simplicity
         config = RailsConfig.from_path("./nemo")
         rails = LLMRails(config)
         
-        # Define an async function for RAG execution
-        async def run_rag(context, statements):
-            return await query_engine.aquery(context.get("user_input"))
+        # Define a synchronous function for RAG execution
+        def run_rag(context, statements):
+            result = asyncio.run(query_engine.aquery(context.get("user_input")))
+            return result
 
         # Register RAG execution with NeMo Guardrails
         rails.register_action("rag", run_rag)
         
-        # If you want to perform some async action with the rails immediately after setup, you can do:
-        # await rails.some_async_method()
-
         return f"Successfully loaded {len(documents)} documents from {len(file_paths)} files."
     except Exception as e:
         return f"Error loading documents: {str(e)}"
-
 
 async def chat_async(message, history):
     global rails
     if rails is None:
         return history + [("Please upload a file first.", None)]
     try:
-        await rails.execute_async(message)
-        # Assuming RailsContext modifies history directly, you might need to adjust this based on how you implemented it
-        return history
+        # Assuming 'execute_async' is a method that processes the message asynchronously
+        result = await rails.execute_async(message)
+        return history + [(message, result)]
     except Exception as e:
         return history + [(message, f"Error processing query: {str(e)}")]
 
@@ -103,15 +96,14 @@ async def stream_response_async(message, history):
     if rails is None:
         yield history + [("Please upload a file first.", None)]
         return
+
     try:
         async for response in rails.stream_async(message):  # Assuming there's an async stream method
+            # Update history with each part of the response
             yield history + [(message, response)]
     except Exception as e:
         yield history + [(message, f"Error processing query: {str(e)}")]
-
-# Function to run synchronous code in an async context
-async def async_load_documents(file_objs):
-    return await asyncio.to_thread(load_documents, file_objs)
+        
 
 # Create the Gradio interface
 with gr.Blocks() as demo:
@@ -127,14 +119,15 @@ with gr.Blocks() as demo:
     msg = gr.Textbox(label="Enter your question", interactive=True)
     clear = gr.Button("Clear")
 
-    # Using Gradio's client-side event loop to run synchronous function
+    # Synchronous function for loading documents
     load_btn.click(fn=load_documents, inputs=[file_input], outputs=[load_output])
-    # Optionally, hide the load button after it has been used
-    #load_btn.click(lambda: gr.update(visible=False), outputs=load_btn)
-    
-    # For chat and streaming, we use async functions
-    msg.submit(fn=stream_response_async, inputs=[msg, chatbot], outputs=[chatbot])
-    clear.click(lambda: None, None, chatbot, queue=False)
 
+    # Asynchronous function for streaming chat response
+    msg.submit(fn=stream_response_async, inputs=[msg, chatbot], outputs=[chatbot])
+
+    # Clear button functionality
+    clear.click(lambda: [], None, chatbot, queue=False)
+
+# Run the app
 if __name__ == "__main__":
     demo.queue().launch(share=True, debug=True)
