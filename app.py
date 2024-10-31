@@ -39,7 +39,7 @@ def get_files_from_input(file_objs):
     return [file_obj.name for file_obj in file_objs]
 
 def load_documents(file_objs):
-    global index, query_engine, rails
+    global index, query_engine
     if index is not None:
         return "Documents already loaded."
 
@@ -64,21 +64,27 @@ def load_documents(file_objs):
         index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
         query_engine = index.as_query_engine(similarity_top_k=20, streaming=True)
 
-        # Initialize NeMo Guardrails synchronously for simplicity
-        config = RailsConfig.from_path("./nemo")
-        rails = LLMRails(config)
-        
-        # Define a synchronous function for RAG execution
-        def run_rag(context, statements):
-            result = asyncio.run(query_engine.aquery(context.get("user_input")))
-            return result
-
-        # Register RAG execution with NeMo Guardrails
-        rails.register_action("rag", run_rag)
-        
         return f"Successfully loaded {len(documents)} documents from {len(file_paths)} files."
     except Exception as e:
         return f"Error loading documents: {str(e)}"
+
+# Initialize NeMo Guardrails here, outside of load_documents
+config = RailsConfig.from_path("./nemo")
+rails = LLMRails(config)
+
+async def run_rag(context, statements):
+    global query_engine
+    if query_engine is None:
+        return "No documents loaded. Please upload documents first."
+    try:
+        result = await query_engine.aquery(context.get("user_input"))
+        return result.response
+    except Exception as e:
+        logger.error(f"Error in RAG query execution: {str(e)}")
+        return str(e)
+
+# Register RAG execution with NeMo Guardrails
+rails.register_action("rag", run_rag)
 
 async def chat_async(message, history):
     global rails
