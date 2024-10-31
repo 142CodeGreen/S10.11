@@ -127,7 +127,7 @@ with gr.Blocks() as demo:
     # Using Gradio's client-side event loop to run synchronous function
     load_btn.click(fn=load_documents, inputs=[file_input], outputs=[load_output])
     # Optionally, hide the load button after it has been used
-    load_btn.click(lambda: gr.update(visible=False), outputs=load_btn)
+    #load_btn.click(lambda: gr.update(visible=False), outputs=load_btn)
     
     # For chat and streaming, we use async functions
     msg.submit(fn=stream_response_async, inputs=[msg, chatbot], outputs=[chatbot])
