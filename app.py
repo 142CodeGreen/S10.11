@@ -69,7 +69,7 @@ def load_documents(file_objs):
         return f"Error loading documents: {str(e)}"
 
 # Initialize NeMo Guardrails here, outside of load_documents
-config = RailsConfig.from_path("./nemo")
+config = RailsConfig.from_path("./Config")
 rails = LLMRails(config)
 
 async def run_rag(context, statements):
