@@ -72,19 +72,19 @@ def load_documents(file_objs):
 config = RailsConfig.from_path("./Config")
 rails = LLMRails(config)
 
-async def run_rag(context, statements):
-    global query_engine
-    if query_engine is None:
-        return "No documents loaded. Please upload documents first."
-    try:
-        result = await query_engine.aquery(context.get("user_input"))
-        return result.response
-    except Exception as e:
-        logger.error(f"Error in RAG query execution: {str(e)}")
-        return str(e)
+#async def run_rag(context, statements):
+#    global query_engine
+#    if query_engine is None:
+#        return "No documents loaded. Please upload documents first."
+#    try:
+#        result = await query_engine.aquery(context.get("user_input"))
+#        return result.response
+#    except Exception as e:
+#        logger.error(f"Error in RAG query execution: {str(e)}")
+#        return str(e)
 
 # Register RAG execution with NeMo Guardrails
-rails.register_action("rag", run_rag)
+#rails.register_action("rag", run_rag)
 
 async def chat_async(message, history):
     global rails
