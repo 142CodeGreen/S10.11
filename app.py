@@ -124,7 +124,7 @@ with gr.Blocks() as demo:
     load_btn.click(fn=load_documents, inputs=[file_input], outputs=[load_output])
 
     # Asynchronous function for streaming chat response
-    msg.submit(fn=stream_response_async, inputs=[msg, chatbot], outputs=[chatbot])
+    msg.submit(fn=stream_response, inputs=[msg, chatbot], outputs=[chatbot])
 
     # Clear button functionality
     clear.click(lambda: [], None, chatbot, queue=False)
