@@ -78,14 +78,15 @@ async def chat(message, history):
         return history + [("Please upload a file first.", None)]
     
     try:
-        response = await query_guardrails(message)
+        response = await rails.generate_async(
+            messages=[{"role": "user", "content": message}]
+        )
         return history + [(message, response)]
     except Exception as e:
         return history + [(message, f"Error processing query: {str(e)}")]
 
 async def query_guardrails(prompt):
     try:
-        # Assuming that 'rails' is your global LLMRails instance
         response = await rails.generate_async(
             messages=[{"role": "user", "content": prompt}]
         )
@@ -100,10 +101,9 @@ def stream_response(message, history):
         return
 
     try:
-        # Use asyncio.run to run the async function in a synchronous context
+        # Use asyncio.run to execute the async function in a synchronous context
         response = asyncio.run(query_guardrails(message))
-        # Stream the response. This might need adjustment if the response isn't a simple string.
-        for text in response.split():  # Simplistic streaming, adjust as needed
+        for text in response.split():  # Adjust streaming as needed
             history.append((message, text))
             yield history
     except Exception as e:
