@@ -28,9 +28,12 @@ if torch.cuda.is_available():
 else:
     logger.warning("GPU not detected or not configured correctly. Falling back to CPU.")
 
+# Initialize NeMo Guardrails here, outside of load_documents
+config = RailsConfig.from_path("./Config")
+rails = LLMRails(config)
+
 index = None
 query_engine = None
-rails = None
 
 # Function to get file names from file objects
 def get_files_from_input(file_objs):
@@ -68,45 +71,37 @@ def load_documents(file_objs):
     except Exception as e:
         return f"Error loading documents: {str(e)}"
 
-# Initialize NeMo Guardrails here, outside of load_documents
-config = RailsConfig.from_path("./Config")
-rails = LLMRails(config)
-
-#async def run_rag(context, statements):
-#    global query_engine
-#    if query_engine is None:
-#        return "No documents loaded. Please upload documents first."
-#    try:
-#        result = await query_engine.aquery(context.get("user_input"))
-#        return result.response
-#    except Exception as e:
-#        logger.error(f"Error in RAG query execution: {str(e)}")
-#        return str(e)
-
-# Register RAG execution with NeMo Guardrails
-#rails.register_action("rag", run_rag)
-
-async def chat_async(message, history):
-    global rails
-    if rails is None:
+# Function to handle chat interactions with NeMo Guardrails
+async def chat(message, history):
+    global query_engine
+    if query_engine is None:
         return history + [("Please upload a file first.", None)]
+    
     try:
-        # Assuming 'execute_async' is a method that processes the message asynchronously
-        result = await rails.execute_async(message)
-        return history + [(message, result)]
+        # Here we would integrate with NeMo Guardrails
+        response = await rails.generate_async(
+            prompt=message, 
+            context={"user_input": message}  # Add any context needed for guardrails
+        )
+        response_text = response
+        return history + [(message, response_text)]
     except Exception as e:
         return history + [(message, f"Error processing query: {str(e)}")]
 
-async def stream_response_async(message, history):
-    global rails
-    if rails is None:
+# Function to stream responses
+async def stream_response(message, history):
+    global query_engine
+    if query_engine is None:
         yield history + [("Please upload a file first.", None)]
         return
 
     try:
-        async for response in rails.stream_async(message):  # Assuming there's an async stream method
-            # Update history with each part of the response
-            yield history + [(message, response)]
+        # Generate response through NeMo Guardrails
+        response = await rails.generate_async(
+            prompt=message, 
+            context={"user_input": message}
+        )
+        yield history + [(message, response)]
     except Exception as e:
         yield history + [(message, f"Error processing query: {str(e)}")]
         
