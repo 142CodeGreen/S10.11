@@ -13,6 +13,9 @@ from doc_loader import load_documents  # Assuming this returns both index and qu
 from Config.rag_pipeline import init  # Import init for guardrails setup
 import logging
 
+Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
+Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
+
 # Initialize LLMPredictor and ServiceContext
 llm_predictor = LLMPredictor(llm=NVIDIA(model="meta/llama-3.1-8b-instruct"))
 service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embed_model=NVIDIAEmbedding(model="NV-Embed-QA", truncate="END"))
