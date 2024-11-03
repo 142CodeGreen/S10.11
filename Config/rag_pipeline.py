@@ -1,12 +1,12 @@
 from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.actions.actions import ActionResult
 from doc_loader import load_documents
-from llama_index import LLMPredictor, ServiceContext
+from llama_index.core import Settings
 import logging
 
 logger = logging.getLogger(__name__)
 
-def prompt_template(question, context):
+def template(question, context):
     """Constructs a prompt template for the RAG system."""
     return f"""Answer user questions based on loaded documents. 
 
@@ -40,11 +40,10 @@ async def rag(query_str, index=None, query_engine=None):
         relevant_chunks = response.response
 
         # Construct the prompt with the template and query results
-        prompt = prompt_template(query_str, relevant_chunks)
+        prompt = template(query_str, relevant_chunks)
         
-        # Using LLMPredictor for generation. Ensure ServiceContext and LLMPredictor are properly set up.
-        service_context = ServiceContext.from_defaults(llm_predictor=LLMPredictor(llm="your_llm_model_here"))
-        answer = await service_context.llm_predictor.apredict(prompt)
+        # Use Settings for LLM configuration instead of LLMPredictor and ServiceContext
+        answer = await Settings.llm.apredict(prompt)
 
         logger.info(f"Generated answer for query '{query_str}': {answer}")
         
@@ -63,8 +62,10 @@ def init(app: LLMRails):
     
     :param app: The LLMRails application instance.
     """
-    # Note: This function might need adjustment based on how you manage the index and query_engine
     global index, query_engine
-    index, query_engine = load_documents("./Config/kb")  # Ensure this returns both index and query_engine
+    index, query_engine = load_documents("./Config/kb")
     app.register_action(rag, "rag")
     logger.info("RAG action registered with NeMo Guardrails.")
+
+# Ensure this is set in your application initialization or configuration
+# Settings.llm = YourLLMModel()  # Replace with the actual LLM setup
