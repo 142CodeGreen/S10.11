@@ -4,6 +4,8 @@ from doc_loader import load_documents
 from llama_index.core import Settings
 import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def template(question, context):
