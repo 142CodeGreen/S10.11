@@ -6,7 +6,7 @@ models:
 instructions:
   - type: general
     content: |
-      Below is a conversation between a user and this RAG chatbot based on the uploaded documents.
+      Below is a conversation between a user and this chatbot based on the uploaded documents.
       The bot is designed to answer questions based on the loaded documents.
       The bot is only knowledgeable about loaded documents.
       If the bot does not know the answer to a question, it truthfully says it does not know.
@@ -25,17 +25,23 @@ sample_conversation: |
   bot express appreciation and offer additional help
     "You're welcome. If you have any more questions or if there's anything else I can help you with, please don't hesitate to ask."
 
+knowledge_base:
+  type: kb_folder
+  path: ./Config/kb
+
 rails:
   # Input rails are invoked when new input from the user is received.
   input:
     flows:
       - self check input
+      - user query
 
   # Output rails are triggered after a bot message has been generated.
   output:
     flows:
       - self check output
       - self check hallucinations
+  
 
   # Whether to try to use a single LLM call for generating the user intent, next step and bot message.
   dialog:
