@@ -1,7 +1,7 @@
 from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.actions.actions import ActionResult
 from doc_loader import load_documents
-from llama_index.llm_predictor import LLMPredictor
+from llama_index.llm import LLMPredictor
 from llama_index.core import ServiceContext
 import logging
 
