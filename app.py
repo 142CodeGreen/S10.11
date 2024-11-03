@@ -5,8 +5,8 @@ import torch
 import os
 import gradio as gr
 from nemoguardrails import RailsConfig, LLMRails
-from llama_index import Document, ServiceContext, LLMPredictor
-from llama_index.core import Settings
+from llama_index import ServiceContext, LLMPredictor
+from llama_index.core import Settings. Document
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 #from llama_index.llm_predictor import LLMPredictor
