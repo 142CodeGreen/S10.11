@@ -8,7 +8,7 @@ from nemoguardrails import RailsConfig, LLMRails
 from llama_index.core import Settings, Document, ServiceContext
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
-from llama_index.llms import LLMPredictor
+from llama_index.llm_predictor import LLMPredictor
 from doc_loader import load_documents  # Assuming this returns both index and query_engine
 from Config.rag_pipeline import init  # Import init for guardrails setup
 import logging
