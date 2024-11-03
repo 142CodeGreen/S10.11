@@ -2,6 +2,7 @@ llama-index-core==0.10.58
 llama-index-readers-file==0.1.30
 llama-index-llms-nvidia==0.1.4
 llama-index-embeddings-nvidia==0.1.4
+llama_index.llm_predictor
 #llama-index-postprocessor-nvidia-rerank
 llama-index-vector-stores-Milvus==0.1.20
 ipywidgets
