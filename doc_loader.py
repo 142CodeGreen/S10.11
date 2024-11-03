@@ -6,11 +6,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def get_files_from_input(file_objs):
-    if not file_objs:
-        return []
-    return [file_obj.name for file_obj in file_objs]
-
 def load_documents(file_objs):
     global index, query_engine  # Declare as global to modify it
     
@@ -18,14 +13,20 @@ def load_documents(file_objs):
     if not os.path.exists(kb_dir):
         os.makedirs(kb_dir)
 
-    file_paths = get_files_from_input(file_objs) if file_objs else [kb_dir]
+    # Directly use file_objs as file paths or objects
+    file_paths = file_objs if isinstance(file_objs, list) else [file_objs]  # Ensure file_paths is always a list
+    
     documents = []
     for file_path in file_paths:
+        # If file_path is a file name or path, treat it as such
         if os.path.isfile(file_path):
             documents.extend(SimpleDirectoryReader(input_files=[file_path]).load_data())
             shutil.copy2(file_path, kb_dir)
         elif os.path.isdir(file_path):
             documents.extend(SimpleDirectoryReader(input_dir=file_path).load_data())
+        else:
+            # If file_path is not a file or directory, perhaps log a warning or skip
+            logger.warning(f"File or directory {file_path} does not exist or is not accessible.")
     
     if not documents:
         logger.warning("No documents found or loaded.")
