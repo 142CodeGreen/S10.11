@@ -1,137 +1,132 @@
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="llama_index")
 
-import sys
 import torch
 import os
 import gradio as gr
+from nemoguardrails import RailsConfig, LLMRails
+from llama_index.core import Settings, Document, ServiceContext
+from llama_index.embeddings.nvidia import NVIDIAEmbedding
+from llama_index.llms.nvidia import NVIDIA
+from llama_index.llm_predictor import LLMPredictor
+from doc_loader import load_documents  # Assuming this returns both index and query_engine
+from Config.rag_pipeline import init  # Import init for guardrails setup
 import logging
-from nemoguardrails import LLMRails, RailsConfig
-import asyncio
 
-logging.basicConfig(level=logging.INFO)
+# Initialize LLMPredictor and ServiceContext
+llm_predictor = LLMPredictor(llm=NVIDIA(model="meta/llama-3.1-8b-instruct"))
+service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embed_model=NVIDIAEmbedding(model="NV-Embed-QA", truncate="END"))
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-from llama_index.core import Settings, SimpleDirectoryReader, VectorStoreIndex, StorageContext
-from llama_index.llms.nvidia import NVIDIA
-from llama_index.embeddings.nvidia import NVIDIAEmbedding
-from llama_index.vector_stores.milvus import MilvusVectorStore
-from llama_index.core.node_parser import SentenceSplitter
-
-# Ensure GPU usage
 if torch.cuda.is_available():
-    logger.info("GPU is available and will be used.")
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    print(f"CUDA is available, GPU being used: {torch.cuda.get_device_name(0)}")
+    print(f"Total CUDA memory: {torch.cuda.get_device_properties(0).total_memory / 1e9} GB")
 else:
-    logger.warning("GPU not detected or not configured correctly. Falling back to CPU.")
+    print("CUDA is not available. Make sure you have a GPU with CUDA installed.")
 
-Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
-Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
-Settings.text_splitter = SentenceSplitter(chunk_size=400)
+rails = None  # Global rails variable
+query_engine = None  # Declare query_engine as a global variable
+index = None  # Declare index as a global variable
 
-# Initialize NeMo Guardrails here, outside of load_documents
-config = RailsConfig.from_path("./Config")
-rails = LLMRails(config)
+def upload_documents(file_objs):
+    """
+    Upload documents and initialize the query engine.
 
-index = None
-query_engine = None
-
-# Function to get file names from file objects
-def get_files_from_input(file_objs):
-    if not file_objs:
-        return []
-    return [file_obj.name for file_obj in file_objs]
-
-def load_documents(file_objs):
-    global index, query_engine
-    if index is not None:
-        return "Documents already loaded."
-
+    :param file_objs: List of file objects to upload.
+    :return: Status message.
+    """
+    global query_engine, index
     try:
-        file_paths = get_files_from_input(file_objs)
-        documents = []
-        for file_path in file_paths:
-            documents.extend(SimpleDirectoryReader(input_files=[file_path]).load_data())
-
-        if not documents:
-            return f"No documents found in the selected files."
-
-        vector_store = MilvusVectorStore(
-            host="127.0.0.1",
-            port=19530,
-            dim=1024,
-            collection_name="your_collection_name",
-            gpu_id=0
-        )
-        
-        storage_context = StorageContext.from_defaults(vector_store=vector_store)
-        index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
-        query_engine = index.as_query_engine(similarity_top_k=20, streaming=True)
-
-        return f"Successfully loaded {len(documents)} documents from {len(file_paths)} files."
+        if file_objs:
+            index, query_engine = load_documents(file_objs)
+            logger.info("Documents uploaded and query engine initialized.")
+            return "Documents uploaded and query engine initialized successfully."
+        else:
+            raise ValueError("No files provided for upload.")
     except Exception as e:
-        return f"Error loading documents: {str(e)}"
+        logger.error(f"Error uploading documents or initializing query engine: {str(e)}")
+        return f"Error: {str(e)}"
 
-async def chat(message, history):
-    global query_engine
-    if query_engine is None:
-        return history + [("Please upload a file first.", None)]
-    
+def initiate_rails():
+    """
+    Initialize the Rails system.
+
+    :return: Status message indicating if Rails were successfully initiated.
+    """
+    global rails, query_engine, index
     try:
-        response = await rails.generate_async(
-            messages=[{"role": "user", "content": message}]
-        )
-        return history + [(message, response)]
+        if query_engine:
+            config = RailsConfig.from_path("./Config")
+            rails = LLMRails(config)
+            init(rails)  # Assuming init uses the global query_engine and index
+            logger.info("Rails initiated successfully.")
+            return "Rails initiated successfully."
+        else:
+            return "Query engine not found. Please upload documents first."
     except Exception as e:
-        return history + [(message, f"Error processing query: {str(e)}")]
+        logger.error(f"Error initializing Rails: {str(e)}")
+        return f"Error initializing Rails: {str(e)}"
 
-async def query_guardrails(prompt):
-    try:
-        response = await rails.generate_async(
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response
-    except Exception as e:
-        return f"Error processing query: {str(e)}"
+async def stream_response(message, history):
+    """
+    Generate streaming responses to user queries.
 
-def stream_response(message, history):
-    global query_engine
-    if query_engine is None:
-        yield history + [("Please upload a file first.", None)]
+    :param message: User's query string.
+    :param history: Chat history to maintain context.
+    :yield: Updated chat history.
+    """
+    if rails is None:
+        yield history + [("Please initialize the system first by loading documents and initiating rails.", None)]
         return
 
+    user_message = {"role": "user", "content": message}
     try:
-        # Use asyncio.run to execute the async function in a synchronous context
-        response = asyncio.run(query_guardrails(message))
-        for text in response.split():  # Adjust streaming as needed
-            history.append((message, text))
+        result = await rails.generate_async(messages=[user_message])
+        partial_response = ""
+        async for chunk in result:
+            partial_response += chunk
+            history.append((message, partial_response)) 
             yield history
     except Exception as e:
-        yield history + [(message, f"Error processing query: {str(e)}")]
+        logger.error(f"Error in stream_response: {str(e)}")
+        yield history + [("An error occurred while processing your query.", None)]
 
-# Create the Gradio interface
+def load_documents_and_setup(file_objs):
+    """
+    Load documents and set up the system.
+
+    :param file_objs: List of file objects to upload.
+    :return: A string with the status of document upload and rails initialization.
+    """
+    upload_status = upload_documents(file_objs)
+    if "initialized successfully" in upload_status:
+        rails_status = initiate_rails()
+        return f"Document Upload Status: {upload_status}\nRails Initialization Status: {rails_status}"
+    else:
+        return f"Document Upload Status: {upload_status}"
+
+# Set up the Gradio interface
 with gr.Blocks() as demo:
-    gr.Markdown("# RAG Chatbot with Guardrails")
-
-    with gr.Row():
-        file_input = gr.File(label="Select files to upload", file_count="multiple")
-        load_btn = gr.Button("Load Documents")
-
+    gr.Markdown("# RAG Chatbot for PDF Files")
+    file_input = gr.File(label="Select files to upload", file_count="multiple")
+    load_btn = gr.Button("Click to Load Documents")
     load_output = gr.Textbox(label="Load Status")
-
     chatbot = gr.Chatbot()
-    msg = gr.Textbox(label="Enter your question", interactive=True)
+    msg = gr.Textbox(label="Enter your question")
     clear = gr.Button("Clear")
 
-    # Synchronous function for loading documents
-    load_btn.click(fn=load_documents, inputs=[file_input], outputs=[load_output])
+    # Button click event to load documents and initiate rails
+    load_btn.click(load_documents_and_setup, inputs=[file_input], outputs=[load_output])
+    
+    # Textbox submission event for querying the chatbot
+    msg.submit(stream_response, inputs=[msg, chatbot], outputs=[chatbot])
+    
+    # Button click event to clear the chat
+    clear.click(lambda: None, None, chatbot, queue=False)
 
-    # Asynchronous function for streaming chat response
-    msg.submit(fn=stream_response, inputs=[msg, chatbot], outputs=[chatbot])
-
-    # Clear button functionality
-    clear.click(lambda: [], None, chatbot, queue=False)
-
-# Run the app
+# Launch the Gradio interface
 if __name__ == "__main__":
     demo.queue().launch(share=True, debug=True)
