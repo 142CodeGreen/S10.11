@@ -24,11 +24,6 @@ service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embe
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-if torch.cuda.is_available():
-    print(f"CUDA is available, GPU being used: {torch.cuda.get_device_name(0)}")
-    print(f"Total CUDA memory: {torch.cuda.get_device_properties(0).total_memory / 1e9} GB")
-else:
-    print("CUDA is not available. Make sure you have a GPU with CUDA installed.")
 
 rails = None  # Global rails variable
 query_engine = None  # Declare query_engine as a global variable
