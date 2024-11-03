@@ -1,5 +1,5 @@
 import os
-from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext
+from llama_index import SimpleDirectoryReader, VectorStoreIndex, StorageContext  #llama_index.core
 from llama_index.vector_stores.milvus import MilvusVectorStore
 import shutil
 import logging
