@@ -6,19 +6,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def get_files_from_input(file_objs):
-    if not file_objs:
-        return []
-    return [file_obj.name for file_obj in file_objs]
-
-def load_documents(file_objs):
+def load_documents(file_paths):
     global index, query_engine  # Declare as global to modify it
     
     kb_dir = "./Config/kb"
     if not os.path.exists(kb_dir):
         os.makedirs(kb_dir)
 
-    file_paths = get_files_from_input(file_objs) if file_objs else [kb_dir]
+    file_paths = file_paths if isinstance(file_paths, list) else [file_paths]
+    
     documents = []
     for file_path in file_paths:
         if os.path.isfile(file_path):
