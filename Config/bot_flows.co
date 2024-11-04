@@ -5,9 +5,9 @@ define flow self check input
     bot refuse to respond
     stop
 
-#define flow user query
-#  $answer = execute rag()
-#  bot $answer
+define flow user query
+  $answer = execute rag()
+  bot $answer
 
 define flow self check output
   $allowed = execute self_check_output
