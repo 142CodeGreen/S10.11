@@ -7,9 +7,16 @@ define flow self check input
 
 define flow user query
   $answer = execute rag()
- $check_hallucination = True
-  bot $answer
-  
+  $check_hallucination = True
+  execute check for hallucinations
+
+define flow check for hallucinations
+  if $check_hallucination
+    $hallucination_check_result = execute self_check_hallucinations
+    if not $hallucination_check_result
+      bot "I'm not confident in my answer as it might not align with the context I have. Here's what I found: $answer"
+    else
+      bot $answer
 
 define flow self check output
   $allowed = execute self_check_output
