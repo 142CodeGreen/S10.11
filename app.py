@@ -50,15 +50,7 @@ def load_documents_and_setup(file_objs):
         logger.error(f"Error in document loading and setup: {str(e)}")
         return f"Error in document loading and setup: {str(e)}"
 
-
 async def stream_response(message, history):
-    """
-    Generate streaming responses to user queries.
-
-    :param message: User's query string.
-    :param history: Chat history to maintain context.
-    :yield: Updated chat history.
-    """
     if rails is None:
         yield history + [("Please initialize the system first by loading documents and initiating rails.", None)]
         return
@@ -69,15 +61,40 @@ async def stream_response(message, history):
     
     user_message = {"role": "user", "content": message}
     try:
-        result = await rails.generate_async(messages=[user_message])
-        partial_response = ""
-        async for chunk in result:
-            partial_response += chunk
-            history.append((message, partial_response)) 
-            yield history
+        # Here, rails.generate_async will internally call the rag function
+        async for chunk in rails.generate_async(messages=[user_message]):
+            # If 'chunk' is a full response, you might need to check if it's already formatted for streaming
+            if isinstance(chunk, ActionResult):
+                if chunk.return_value:
+                    yield history + [(message, chunk.return_value)]
+            else:
+                yield history + [(message, chunk)]
+            
     except Exception as e:
         logger.error(f"Error in stream_response: {str(e)}")
         yield history + [("An error occurred while processing your query.", None)]
+
+
+#async def stream_response(message, history):
+#    if rails is None:
+#        yield history + [("Please initialize the system first by loading documents and initiating rails.", None)]
+#        return
+
+#    if query_engine is None or index is None:
+#        yield history + [("Please upload documents first.", None)]
+#        return
+    
+#    user_message = {"role": "user", "content": message}
+#    try:
+#        result = await rails.generate_async(messages=[user_message])
+#        partial_response = ""
+#        async for chunk in result:
+#            partial_response += chunk
+#            history.append((message, partial_response)) 
+#            yield history
+#    except Exception as e:
+#        logger.error(f"Error in stream_response: {str(e)}")
+#        yield history + [("An error occurred while processing your query.", None)]
 
 
 def start_gradio():
