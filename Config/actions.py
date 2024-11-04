@@ -28,6 +28,7 @@ def template(question, context):
     USER QUESTION: ```{question}```
     Answer in markdown:"""
 
+@action(is_system_action=True)
 async def rag(context: dict, llm: NVIDIA, query_engine):
     context_updates = {}
     message = context.get('last_user_message', '')
