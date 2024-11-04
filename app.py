@@ -7,7 +7,7 @@ from llama_index.core import Settings
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 from doc_loader import load_documents
-from Config.rag_pipeline import init  # Correct path to import init
+from Config.actions import init  # Correct path to import init
 import logging
 
 # Configure logging
