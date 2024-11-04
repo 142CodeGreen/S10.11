@@ -62,11 +62,26 @@ async def stream_response(message, history):
     user_message = {"role": "user", "content": message}
     try:
         # Initiate the NeMo Guardrails flow
-        async for chunk in rails.generate_async(messages=[user_message]):  
-            if isinstance(chunk, dict) and "content" in chunk: 
-                yield history + [(message, chunk["content"])]
+        result = await rails.generate_async(messages=[user_message])
+        
+        # If result is a dictionary or contains 'content', handle appropriately
+        if isinstance(result, dict):
+            if "content" in result:
+                yield history + [(message, result["content"])]
             else:
-                yield history + [(message, chunk)] 
+                # If no 'content' key, maybe yield the whole dict or handle errors
+                yield history + [(message, str(result))]
+        else:
+            # Assuming result could be a string or an iterable of chunks
+            if isinstance(result, str):
+                yield history + [(message, result)]
+            else:
+                # For an iterable result
+                for chunk in result:
+                    if isinstance(chunk, dict) and "content" in chunk:
+                        yield history + [(message, chunk["content"])]
+                    else:
+                        yield history + [(message, chunk)]
     except Exception as e:
         logger.error(f"Error in stream_response: {str(e)}")
         yield history + [("An error occurred while processing your query.", None)]
