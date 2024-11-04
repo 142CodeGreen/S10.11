@@ -61,15 +61,13 @@ async def stream_response(message, history):
     
     user_message = {"role": "user", "content": message}
     try:
-        # Here, rails.generate_async will internally call the rag function
-        async for chunk in rails.generate_async(messages=[user_message]):
-            # If 'chunk' is a full response, you might need to check if it's already formatted for streaming
-            if isinstance(chunk, ActionResult):
-                if chunk.return_value:
-                    yield history + [(message, chunk.return_value)]
+        # Await the rails.generate_async coroutine
+        gen = await rails.generate_async(messages=[user_message])  
+        async for chunk in gen:
+            if isinstance(chunk, dict) and "content" in chunk: 
+                yield history + [(message, chunk["content"])]
             else:
-                yield history + [(message, chunk)]
-            
+                yield history + [(message, chunk)] 
     except Exception as e:
         logger.error(f"Error in stream_response: {str(e)}")
         yield history + [("An error occurred while processing your query.", None)]
