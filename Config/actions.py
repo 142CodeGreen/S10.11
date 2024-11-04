@@ -48,8 +48,9 @@ async def rag(context: dict, llm: NVIDIA, query_engine):
 
 def init(app: LLMRails):
     """
-    Initialize the RAG pipeline with NeMo Guardrails, loading document index and query engine.
-    
+    Initialize the RAG pipeline with NeMo Guardrails, 
+    loading document index and query engine.
+
     :param app: The LLMRails application instance.
     """
     global index, query_engine
@@ -57,3 +58,5 @@ def init(app: LLMRails):
     if index is None or query_engine is None:
         logger.error("Failed to load documents or create query engine.")
         return
+
+    app.register_action(rag, name="user_query")  # Register the action 
