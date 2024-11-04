@@ -36,7 +36,6 @@ def template(question, context):
     USER QUESTION: ```{question}```
     Answer in markdown:"""
 
-@action(is_system_action=True)
 async def rag(index=None, query_engine=None, context=None):
     """
     Asynchronous function to handle retrieval augmented generation (RAG) process.
