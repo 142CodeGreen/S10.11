@@ -41,26 +41,24 @@ async def rag(index=None, query_engine=None, context=None):
         return ActionResult(return_value="No documents loaded. Please upload documents first.", context_updates={})
     
     try:
-        # Query the engine
         response = await query_engine.aquery(message)
         relevant_chunks = response.response
-
-        # Construct the prompt with the template and query results
         prompt = template(message, relevant_chunks)
-        
-        # Use Settings for LLM configuration instead of LLMPredictor and ServiceContext
         answer = await Settings.llm.apredict(prompt)
-
-        logger.info(f"Generated answer for query '{message}': {answer}")
         
+        logger.info(f"Generated answer for query '{message}': {answer}")
         return ActionResult(return_value=answer, context_updates={
             'last_bot_message': answer,
             '_last_bot_prompt': prompt
         })
-    except Exception as e:
-        error_message = f"Error in RAG process: {str(e)}"
+    except AttributeError as e:
+        error_message = f"Error accessing query engine or LLM: {str(e)}"
         logger.error(error_message)
-        return ActionResult(return_value="An error occurred while processing your query.", context_updates={})
+        return ActionResult(return_value="An error occurred while accessing the system.", context_updates={})
+    except Exception as e:
+        error_message = f"Unexpected error in RAG process: {str(e)}"
+        logger.error(error_message)
+        return ActionResult(return_value="An unexpected error occurred while processing your query.", context_updates={})
 
 def init(app: LLMRails):
     """
@@ -72,6 +70,3 @@ def init(app: LLMRails):
     index, query_engine = load_documents("./Config/kb")
     app.register_action(rag, "rag")
     logger.info("RAG action registered with NeMo Guardrails.")
-
-# Ensure this is set in your application initialization or configuration
-# Settings.llm = YourLLMModel()  # Replace with the actual LLM setup
