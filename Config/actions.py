@@ -47,12 +47,6 @@ async def rag(context: dict, llm: NVIDIA, query_engine):
         return ActionResult(return_value="An unexpected error occurred while processing your query.", context_updates={})
 
 def init(app: LLMRails):
-    """
-    Initialize the RAG pipeline with NeMo Guardrails, 
-    loading document index and query engine.
-
-    :param app: The LLMRails application instance.
-    """
     global index, query_engine
     index, query_engine = load_documents("./Config/kb")
     if index is None or query_engine is None:
