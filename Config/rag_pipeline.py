@@ -11,13 +11,17 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-if not hasattr(Settings, 'llm') or Settings.llm is None:
-    logger.warning("LLM not configured in global settings. Setting now.")
-    Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
+# Set LLM and Embedding Model
+Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
+Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
+
+#if not hasattr(Settings, 'llm') or Settings.llm is None:
+#    logger.warning("LLM not configured in global settings. Setting now.")
+#    Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
     
-if not hasattr(Settings, 'embed_model') or Settings.embed_model is None:
-    logger.warning("Embedding model not configured in global settings. Setting now.")
-    Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
+#if not hasattr(Settings, 'embed_model') or Settings.embed_model is None:
+#    logger.warning("Embedding model not configured in global settings. Setting now.")
+#    Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
 
 def template(question, context):
     """Constructs a prompt template for the RAG system."""
