@@ -61,9 +61,8 @@ async def stream_response(message, history):
     
     user_message = {"role": "user", "content": message}
     try:
-        # Await the rails.generate_async coroutine
-        gen = await rails.generate_async(messages=[user_message])  
-        async for chunk in gen:
+        # Initiate the NeMo Guardrails flow
+        async for chunk in rails.generate_async(messages=[user_message]):  
             if isinstance(chunk, dict) and "content" in chunk: 
                 yield history + [(message, chunk["content"])]
             else:
@@ -71,7 +70,7 @@ async def stream_response(message, history):
     except Exception as e:
         logger.error(f"Error in stream_response: {str(e)}")
         yield history + [("An error occurred while processing your query.", None)]
-
+        
 
 #async def stream_response(message, history):
 #    if rails is None:
