@@ -23,6 +23,13 @@
       Answer:
 
 
+  - task: self_check_hallucination
+    content: |-
+      You are given a task to identify if the hypothesis is in agreement with the context below.
+      You will only use the contents of the context and not rely on external knowledge.
+      Answer with yes/no. "context": {{ paragraph }} "hypothesis": {{ statement }} "agreement":
+
+
   - task: self_check_output
     content: |
       Your task is to determine whether the bot response meets the moderation policy, given the user input and the bot response.
@@ -43,14 +50,3 @@
 
       Question: Should the message be blocked (Yes or No)?
       Answer:
-
-
-  - task: self_check_hallucinations
-    content: |
-     You are given a task to identify if the hypothesis is in agreement with the context below.
-     You will only use the contents of the context and not rely on external knowledge.
-     Answer with yes/no. 
-
-     "context": {{ document_context }}
-     "hypothesis": {{ bot_response }}
-     "agreement":
