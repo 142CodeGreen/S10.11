@@ -51,10 +51,7 @@ async def rag(index=None, query_engine=None, context=None):
             'last_bot_message': answer,
             '_last_bot_prompt': prompt
         })
-    except AttributeError as e:
-        error_message = f"Error accessing query engine or LLM: {str(e)}"
-        logger.error(error_message)
-        return ActionResult(return_value="An error occurred while accessing the system.", context_updates={})
+    
     except Exception as e:
         error_message = f"Unexpected error in RAG process: {str(e)}"
         logger.error(error_message)
