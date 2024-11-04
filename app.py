@@ -79,24 +79,6 @@ async def stream_response(message, history):
         logger.error(f"Error in stream_response: {str(e)}")
         yield history + [("An error occurred while processing your query.", None)]
 
-def load_documents_and_setup(file_objs):
-    """
-    Load documents and set up the system.
-
-    :param file_objs: List of file objects to upload.
-    :return: A string with the status of document upload and rails initialization.
-    """
-    global query_engine, index
-    try:
-        upload_status = upload_documents(file_objs)
-        if "initialized successfully" in upload_status:
-            rails_status = initiate_rails()
-            return f"Document Upload Status: {upload_status}\nRails Initialization Status: {rails_status}"
-        else:
-            return f"Document Upload Status: {upload_status}"
-    except Exception as e:
-        logger.error(f"Error in document loading and setup: {str(e)}")
-        return f"Error in document loading and setup: {str(e)}"
 
 def start_gradio():
     with gr.Blocks() as demo:
