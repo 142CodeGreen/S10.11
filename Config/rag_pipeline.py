@@ -1,12 +1,23 @@
 from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.actions.actions import ActionResult
+from llama_index.embeddings.nvidia import NVIDIAEmbedding
+from llama_index.llms.nvidia import NVIDIA
 from doc_loader import load_documents
 from llama_index.core import Settings
+import os
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+if not hasattr(Settings, 'llm') or Settings.llm is None:
+    logger.warning("LLM not configured in global settings. Setting now.")
+    Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
+    
+if not hasattr(Settings, 'embed_model') or Settings.embed_model is None:
+    logger.warning("Embedding model not configured in global settings. Setting now.")
+    Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
 
 def template(question, context):
     """Constructs a prompt template for the RAG system."""
