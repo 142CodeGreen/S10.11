@@ -57,11 +57,17 @@ async def rag(index=None, query_engine=None, context=None):
     
     try:
         response = await query_engine.aquery(message)
-        relevant_chunks = response.response
-        prompt = template(message, relevant_chunks)
-        answer = await Settings.llm.apredict(prompt)
+        logger.info(f"Query engine response: {response}")
         
-        logger.info(f"Generated answer for query '{message}': {answer}")
+        relevant_chunks = response.response
+        logger.info(f"Relevant document chunks retrieved: {relevant_chunks}")
+        
+        prompt = template(message, relevant_chunks)
+        logger.info(f"Prompt generated for LLM: {prompt}")
+        
+        answer = await Settings.llm.apredict(prompt)
+        logger.info(f"LLM generated answer: {answer}")
+        
         return ActionResult(return_value=answer, context_updates={
             'last_bot_message': answer,
             '_last_bot_prompt': prompt
