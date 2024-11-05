@@ -35,7 +35,7 @@ def upload_documents(file_objs):
         logger.error(f"Error uploading documents or initializing query engine: {str(e)}")
         return f"Error: {str(e)}"
 
-def load_documents_and_setup(file_objs):
+async def load_documents_and_setup(file_objs):
     global rails, query_engine, index
     try:
         upload_status = upload_documents(file_objs)
@@ -43,8 +43,13 @@ def load_documents_and_setup(file_objs):
             config = RailsConfig.from_path("./Config")
             rails = LLMRails(config)
 
+            # --- Run load_documents to completion ---
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(load_documents("./Config/kb")) 
+            
+
             # --- Ensure documents are loaded before initializing rails ---
-            index, query_engine = load_documents("./Config/kb") 
+            #index, query_engine = await load_documents("./Config/kb") 
             if index is None or query_engine is None:
                 logger.error("Failed to load documents or create query engine.")
                 return
