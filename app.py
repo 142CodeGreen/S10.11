@@ -20,38 +20,33 @@ Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
 Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
 
 rails = None  # Global rails variable
-query_engine = None  # Global query_engine variable
-index = None  # Global index variable
+kb = None  # Global KnowledgeBase variable
 
 def upload_documents(file_objs):
-    global query_engine, index
+    global kb
     try:
         if file_objs:
-            for file_obj in file_objs:  # Iterate over the files
-                index, query_engine = load_documents(file_obj)  # Load each file individually
-            #index, query_engine = load_documents(file_objs)
-            return "Documents uploaded and query engine initialized successfully."
+            kb = load_documents([file_obj.name for file_obj in file_objs])
+            return "Documents uploaded and KnowledgeBase initialized successfully."
         else:
             raise ValueError("No files provided for upload.")
     except Exception as e:
-        logger.error(f"Error uploading documents or initializing query engine: {str(e)}")
+        logger.error(f"Error uploading documents or initializing KnowledgeBase: {str(e)}")
         return f"Error: {str(e)}"
 
-       
 async def load_documents_and_setup(file_objs):
-    global rails, query_engine, index
+    global rails, kb
     try:
         upload_status = upload_documents(file_objs)
         if "initialized successfully" in upload_status:
             config = RailsConfig.from_path("./Config")
             rails = LLMRails(config)
-
-            # --- Load the index from cache or create it ---
-            index, query_engine = load_documents(file_objs)
-            if index is None or query_engine is None:
-                logger.error("Failed to load documents or create query engine.")
-                return
-            init(rails)  # Initialize rails with the new document context
+            
+            if kb is None:
+                logger.error("Failed to initialize KnowledgeBase.")
+                return f"Document Upload Status: {upload_status}\nRails Initialization Status: KnowledgeBase initialization failed."
+            
+            init(rails, kb)  # Initialize rails with the KnowledgeBase
             return f"Document Upload Status: {upload_status}\nRails Initialization Status: Rails initiated successfully."
         else:
             return f"Document Upload Status: {upload_status}"
@@ -60,32 +55,22 @@ async def load_documents_and_setup(file_objs):
         return f"Error in document loading and setup: {str(e)}"
 
 async def stream_response(message, history):
-    if rails is None:
+    if rails is None or kb is None:
         yield history + [("Please initialize the system first by loading documents and initiating rails.", None)]
-        return
-
-    if query_engine is None or index is None:
-        yield history + [("Please upload documents first.", None)]
         return
     
     user_message = {"role": "user", "content": message}
     try:
-        # Initiate the NeMo Guardrails flow
-        result = await rails.generate_async(messages=[user_message])
-        
-        # If result is a dictionary or contains 'content', handle appropriately
+        result = await rails.generate_async(messages=[user_message], kb=kb)
         if isinstance(result, dict):
             if "content" in result:
                 yield history + [(message, result["content"])]
             else:
-                # If no 'content' key, maybe yield the whole dict or handle errors
                 yield history + [(message, str(result))]
         else:
-            # Assuming result could be a string or an iterable of chunks
             if isinstance(result, str):
                 yield history + [(message, result)]
             else:
-                # For an iterable result
                 for chunk in result:
                     if isinstance(chunk, dict) and "content" in chunk:
                         yield history + [(message, chunk["content"])]
@@ -94,29 +79,6 @@ async def stream_response(message, history):
     except Exception as e:
         logger.error(f"Error in stream_response: {str(e)}")
         yield history + [("An error occurred while processing your query.", None)]
-        
-
-#async def stream_response(message, history):
-#    if rails is None:
-#        yield history + [("Please initialize the system first by loading documents and initiating rails.", None)]
-#        return
-
-#    if query_engine is None or index is None:
-#        yield history + [("Please upload documents first.", None)]
-#        return
-    
-#    user_message = {"role": "user", "content": message}
-#    try:
-#        result = await rails.generate_async(messages=[user_message])
-#        partial_response = ""
-#        async for chunk in result:
-#            partial_response += chunk
-#            history.append((message, partial_response)) 
-#            yield history
-#    except Exception as e:
-#        logger.error(f"Error in stream_response: {str(e)}")
-#        yield history + [("An error occurred while processing your query.", None)]
-
 
 def start_gradio():
     with gr.Blocks() as demo:
@@ -128,16 +90,10 @@ def start_gradio():
         msg = gr.Textbox(label="Enter your question")
         clear = gr.Button("Clear")
 
-        # Load documents and setup rails
         load_btn.click(load_documents_and_setup, inputs=[file_input], outputs=[load_output])
-        
-        # Handle user query
         msg.submit(stream_response, inputs=[msg, chatbot], outputs=[chatbot])
-        
-        # Clear chat history
         clear.click(lambda: None, None, chatbot, queue=False)
 
-    # Launch the Gradio interface
     demo.queue().launch(share=True, debug=True)
 
 if __name__ == "__main__":
