@@ -54,12 +54,6 @@ def load_documents(file_paths):
         query_engine = index.as_query_engine(similarity_top_k=20, streaming=True)
 
         logger.info("Index and Query Engine created or retrieved from cache.")
-        
-        # Test Query - Commented out for production use
-        # test_query = "This is a test query"
-        # test_response = query_engine.query(test_query)
-        # print(f"Test Query Context: {test_response}")
-
         return index, query_engine
     except Exception as e:
         logger.error(f"Error during index creation: {str(e)}")
