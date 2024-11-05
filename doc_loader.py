@@ -1,10 +1,12 @@
 import os
-from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext
+from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext, Settings
+from llama_index.core.node_parser import SentenceSplitter
 from llama_index.vector_stores.milvus import MilvusVectorStore
 import shutil
 import logging
 
 logger = logging.getLogger(__name__)
+Settings.text_splitter = SentenceSplitter(chunk_size=400, chunk_overlap=20)
 
 def load_documents(file_paths):
     global index, query_engine  # Declare as global to modify it
