@@ -24,11 +24,22 @@
 
   - task: self_check_hallucination
     content: |
-      Based on the provided context, does the answer accurately reflect the information in the documents? 
-      Answer with "yes" or "no".
-      "context": {{ context }} 
-      "answer": {{ answer }}  # This uses the $answer variable from the flow
+      You are given a task to identify if the hypothesis is in agreement with the context below.
+      You will only use the contents of the context and not rely on external knowledge.
+      Answer with yes/no. 
+      "context":   
+      {{ context }}  # Add this line
+      "paragraph": {{ paragraph }} 
+      "hypothesis": {{ statement }} 
       "agreement": 
+
+  #- task: self_check_hallucination
+  #  content: |
+  #    Based on the provided context, does the answer accurately reflect the information in the documents? 
+  #    Answer with "yes" or "no".
+  #    "context": {{ context }} 
+  #    "answer": {{ answer }}  # This uses the $answer variable from the flow
+  #    "agreement": 
 
 
   - task: self_check_output
@@ -56,4 +67,9 @@
   #  content: |
   #    You are given a task to identify if the hypothesis is in agreement with the context below.
   #    You will only use the contents of the context and not rely on external knowledge.
-  #    Answer with yes/no. "context": {{ paragraph }} "hypothesis": {{ statement }} "agreement":
+  #    Answer with yes/no. 
+   #    "context":   
+   #    {{ context }}  # Add this line
+   #    "paragraph": {{ paragraph }} 
+   #    "hypothesis": {{ statement }} 
+   #    "agreement": 
