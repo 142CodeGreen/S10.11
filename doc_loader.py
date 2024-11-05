@@ -37,7 +37,7 @@ def load_documents(file_paths):
         logger.warning("No documents found or loaded.")
         return None
 
-    vector_store = MilvusVectorStore.from_params(uri="milvus_demo.db", dim=1024, overwrite=True, output_fields=[])
+    vector_store = MilvusVectorStore(uri="milvus_demo.db", dim=1024, overwrite=True, output_fields=[])
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
     index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
 
