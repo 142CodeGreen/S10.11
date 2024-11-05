@@ -4,11 +4,14 @@ from llama_index.core.node_parser import SentenceSplitter
 from llama_index.vector_stores.milvus import MilvusVectorStore
 import shutil
 import logging
+from functools import lru_cache  # For in-memory caching
+
 
 logger = logging.getLogger(__name__)
 Settings.text_splitter = SentenceSplitter(chunk_size=400, chunk_overlap=20)
 
-async def load_documents(file_paths):
+@lru_cache(maxsize=1)
+def load_documents(file_paths):
     global index, query_engine  # Declare as global to modify it
     
     kb_dir = "./Config/kb"
@@ -29,7 +32,7 @@ async def load_documents(file_paths):
         logger.warning("No documents found or loaded.")
         return None
 
-    vector_store = await MilvusVectorStore.from_params(uri="milvus_demo.db", dim=1024, overwrite=True, output_fields=[])
+    vector_store = MilvusVectorStore.from_params(uri="milvus_demo.db", dim=1024, overwrite=True, output_fields=[])
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
     index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
 
