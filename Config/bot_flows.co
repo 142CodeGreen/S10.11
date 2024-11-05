@@ -5,10 +5,15 @@ define flow self check input
     bot refuse to respond
     stop
 
+define flow generate_answer  # New flow for RAG
+  user ...
+  $answer = execute rag()  # This calls your rag() function
+  bot $answer
+
 define flow self_check_hallucination
   user ...
-  $answer = execute rag()
-  $check_hallucination = True
+  $answer = execute flow generate_answer  # Call the RAG flow
+  $check_hallucination = True 
   bot $answer
 
 define flow self check output
