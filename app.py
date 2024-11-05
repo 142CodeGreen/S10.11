@@ -44,10 +44,7 @@ async def load_documents_and_setup(file_objs):
             rails = LLMRails(config)
 
             # --- Load the index from cache or create it ---
-            index, query_engine = load_documents("./Config/kb")
-            if index is None or query_engine is None:
-                logger.error("Failed to load documents or create query engine.")
-                return
+            index, query_engine = load_documents(tuple(file_objs))  # Convert to tuple here
             init(rails)  # Initialize rails with the new document context
             return f"Document Upload Status: {upload_status}\nRails Initialization Status: Rails initiated successfully."
         else:
