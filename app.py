@@ -4,7 +4,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="llama_index")
 import os
 import gradio as gr
 from nemoguardrails import RailsConfig, LLMRails
-from llama_index.core import Settings
+from llama_index.core import Settings, SimpleDirectoryReader
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 from functools import lru_cache
