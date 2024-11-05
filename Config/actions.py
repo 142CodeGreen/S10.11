@@ -54,4 +54,4 @@ def init(app: LLMRails):
         logger.error("Failed to load documents or create query engine.")
         return
 
-    app.register_action(rag, name="generate_answer")  # Register the action 
+    app.register_action(rag, name="self_check_hallucination")  # Register the action 
