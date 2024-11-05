@@ -30,17 +30,17 @@ def template(question, context):
 
 
 async def rag(context: dict, llm: NVIDIA, query_engine):
-    print(f"query_engine in rag(): {query_engine}")
     context_updates = {}
-    message = context.get('last_user_message', '')
+    user_message = context.get('last_user_message', '')
     
     try:
-        print(f"Query: {message}")  # Print the query
-        response = query_engine.aquery(message)
+        print(f"query_engine in rag(): {query_engine}")
+        response = await query_engine.aquery(user_message)
         relevant_chunks = response.response
+        print(f"Query: {user_message}")  # Print the query
         print(f"Relevant Chunks: {relevant_chunks}")  # Print the context
         context_updates["relevant_chunks"] = relevant_chunks
-        context_updates["_last_bot_prompt"] = template(message, relevant_chunks)
+        context_updates["_last_bot_prompt"] = template(user_message, relevant_chunks)
         answer = await llm.apredict(context_updates["_last_bot_prompt"])
         context_updates["last_bot_message"] = answer
         return ActionResult(return_value=answer, context_updates=context_updates)
@@ -51,10 +51,10 @@ async def rag(context: dict, llm: NVIDIA, query_engine):
         return ActionResult(return_value="An unexpected error occurred while processing your query.", context_updates={})
 
 def init(app: LLMRails):
-    global index, query_engine
-    index, query_engine = load_documents("./Config/kb")
-    if index is None or query_engine is None:
-        logger.error("Failed to load documents or create query engine.")
+    global query_engine
+    _, query_engine = load_documents("./Config/kb")  # Load documents and create query engine
+    if query_engine is None:
+        logger.error("Failed to create query engine.")
         return
 
-    app.register_action(rag, name="generate_answer")  # Register the action 
+    app.register_action(rag, name="generate_answer")
