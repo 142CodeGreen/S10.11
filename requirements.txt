@@ -6,7 +6,7 @@ llama-index-embeddings-nvidia==0.1.4
 llama-index-vector-stores-Milvus==0.1.20
 #pymilvus
 pdf2image
-poppler
+python-poppler-qt5
 ipywidgets
 gradio
 nemoguardrails
