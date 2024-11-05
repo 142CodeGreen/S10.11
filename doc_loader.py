@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 Settings.text_splitter = SentenceSplitter(chunk_size=400, chunk_overlap=20)
 
-def load_documents(file_paths):
+async def load_documents(file_paths):
     global index, query_engine  # Declare as global to modify it
     
     kb_dir = "./Config/kb"
@@ -29,11 +29,11 @@ def load_documents(file_paths):
         logger.warning("No documents found or loaded.")
         return None
 
-    vector_store = MilvusVectorStore(uri="milvus_demo.db", dim=1024, overwrite=True, output_fields=[])
+    vector_store = await MilvusVectorStore(uri="milvus_demo.db", dim=1024, overwrite=True, output_fields=[])
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
     index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
 
-    query_engine = index.as_query_engine(similarity_top_k=20, streaming=True)
+    query_engine = await index.as_query_engine(similarity_top_k=20, streaming=True)
     # --- Test Query ---
     test_query = "This is a test query"  # Replace with a relevant query
     test_response = query_engine.query(test_query)
