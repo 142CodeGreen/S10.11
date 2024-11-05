@@ -34,11 +34,11 @@ rails:
   input:
     flows:
       - self check input
-      - generate_answer
     
   # Output rails are triggered after a bot message has been generated.
   output:
     flows:
+      - generate_answer
       - self check hallucination
       - self check output
 
