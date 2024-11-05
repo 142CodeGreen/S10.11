@@ -1,11 +1,3 @@
-define flow self check input
-  $allowed = execute self_check_input
-
-  if not $allowed
-    bot refuse to respond
-    stop
-
-
 define flow generate_answer  # New flow for RAG
   user ...
   $answer = execute rag()  # This calls your rag() function
@@ -16,17 +8,6 @@ define flow self_check_hallucination
   $answer = execute flow generate_answer  # Call the RAG flow
   $check_hallucination = True 
   bot $answer
-
-
-define flow self check output
-  $allowed = execute self_check_output
-
-  if not $allowed
-    bot refuse to respond
-    stop
-
-define bot refuse to respond
-  "I'm sorry, I can't respond to that."
 
 #define flow self check hallucinations
 #  user ...
