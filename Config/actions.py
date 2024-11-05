@@ -33,9 +33,16 @@ async def rag(context: dict, llm: NVIDIA, query_engine):
     context_updates = {}
     message = context.get('last_user_message', '')
 
+    # --- Check if query_engine is available ---
+    if query_engine is None:
+        print("Error: query_engine is None in rag()")
+        return ActionResult(return_value="An error occurred.", context_updates={})
+
     try:
+        print(f"Query: {message}")  # Print the query
         response = await query_engine.aquery(message)
         relevant_chunks = response.response
+        print(f"Relevant Chunks: {relevant_chunks}")  # Print the context
         context_updates["relevant_chunks"] = relevant_chunks
         context_updates["_last_bot_prompt"] = template(message, relevant_chunks)
         answer = await llm.apredict(context_updates["_last_bot_prompt"])
