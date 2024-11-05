@@ -13,6 +13,8 @@ pinned: false
 
 This is a practise of including Nemo Guardrails on top of S1 repository with adjusted code. It's a simple RAG chatbot that allows upload of file then conduct Q&A using NVIDIA NIM.  The RAG orchestration is via LlamaIndex and GPU-accelerated Milvus Vector Store, using NVIDIA embeddings. 
 
+This workbook includes indexing for loaded document in the doc_loader.py file.
+
 ## Setup
 
 1. Clone the repository:
