@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 Settings.text_splitter = SentenceSplitter(chunk_size=400, chunk_overlap=20)
 
 @lru_cache(maxsize=1)
+def load_documents_helper(file_paths):
+     file_paths = tuple(file_paths)
+     return load_documents(file_paths)
+    
 def load_documents(file_paths):
     global index, query_engine  # Declare as global to modify it
     
