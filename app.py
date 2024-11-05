@@ -45,6 +45,9 @@ async def load_documents_and_setup(file_objs):
 
             # --- Load the index from cache or create it ---
             index, query_engine = load_documents("./Config/kb")
+            if index is None or query_engine is None:
+                logger.error("Failed to load documents or create query engine.")
+                return
             init(rails)  # Initialize rails with the new document context
             return f"Document Upload Status: {upload_status}\nRails Initialization Status: Rails initiated successfully."
         else:
