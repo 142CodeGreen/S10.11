@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="llama_index")
 
+import os
 import gradio as gr
 from nemoguardrails import RailsConfig, LLMRails
 from llama_index.core import Settings
