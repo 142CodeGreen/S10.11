@@ -5,7 +5,6 @@ import gradio as gr
 from nemoguardrails import RailsConfig, LLMRails
 from llama_index.core import Settings
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
-from llama_index.core.node_parser import SentenceSplitter
 from llama_index.llms.nvidia import NVIDIA
 from doc_loader import load_documents
 from Config.actions import init
@@ -19,7 +18,6 @@ logger = logging.getLogger(__name__)
 # Set LLM and Embedding Model
 Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
 Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
-Settings.text_splitter = SentenceSplitter(chunk_size=400)
 
 rails = None  # Global rails variable
 query_engine = None  # Global query_engine variable
