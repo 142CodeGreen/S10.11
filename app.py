@@ -42,6 +42,13 @@ def load_documents_and_setup(file_objs):
         if "initialized successfully" in upload_status:
             config = RailsConfig.from_path("./Config")
             rails = LLMRails(config)
+
+            # --- Ensure documents are loaded before initializing rails ---
+            index, query_engine = load_documents("./Config/kb") 
+            if index is None or query_engine is None:
+                logger.error("Failed to load documents or create query engine.")
+                return
+
             init(rails)  # Initialize rails with the new document context
             return f"Document Upload Status: {upload_status}\nRails Initialization Status: Rails initiated successfully."
         else:
