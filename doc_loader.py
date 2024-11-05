@@ -37,6 +37,12 @@ def load_documents(file_paths):
     index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
 
     query_engine = index.as_query_engine(similarity_top_k=20, streaming=True)
+
+    if index is not None and query_engine is not None:
+        logger.info("Loaded index from cache.")  # Log cache hit
+    else:
+        logger.info("Creating new index.")  # Log cache miss
+
     # --- Test Query ---
     test_query = "This is a test query"  # Replace with a relevant query
     test_response = query_engine.query(test_query)
