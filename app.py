@@ -38,7 +38,7 @@ def upload_documents(file_objs):
 async def load_documents_and_setup(file_objs):
     global rails, query_engine, index
     try:
-        upload_status = upload_documents(file_objs)
+        upload_status = await upload_documents(file_objs)
         if "initialized successfully" in upload_status:
             config = RailsConfig.from_path("./Config")
             rails = LLMRails(config)
