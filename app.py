@@ -26,7 +26,9 @@ def upload_documents(file_objs):
     global kb
     try:
         if file_objs:
-            kb = load_documents([file_obj.name for file_obj in file_objs])
+            # Get the file names from the uploaded file objects
+            file_names = [file_obj.name for file_obj in file_objs]  
+            kb = load_documents(file_names)  # Pass the list of file names to load_documents
             return "Documents uploaded and KnowledgeBase initialized successfully."
         else:
             raise ValueError("No files provided for upload.")
