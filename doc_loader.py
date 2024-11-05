@@ -98,29 +98,30 @@ def cached_load_documents(file_paths):
     return documents
 
 def load_documents(file_paths):
-    """
-    Load documents into a KnowledgeBase using Milvus for vector storage.
+    kb = None  # Initialize kb
 
-    Args:
-    file_paths (str or list): Path(s) to document file(s) or directory(ies).
+    # If file_paths is a string, convert it to a list
+    if isinstance(file_paths, str):
+        file_paths = [file_paths]
 
-    Returns:
-    KnowledgeBase: An instance of KnowledgeBase with loaded documents.
-    """
-    documents = cached_load_documents(file_paths)
+    for file_path in file_paths:
+        documents = cached_load_documents(file_path)  # Call with a single file path
 
-    if not documents:
-        return None
+        if not documents:
+            continue  # Skip to the next file if no documents were loaded
 
-    try:
-        vector_store = MilvusVectorStore(uri="milvus_demo.db", dim=1024, overwrite=True, output_fields=[])
-        kb = KnowledgeBase(vector_store=vector_store)
-        
-        for doc in documents:
-            kb.add_document(doc)  # Assuming add_document knows how to handle Markdown
-        
-        logger.info("Documents loaded into KnowledgeBase.")
-        return kb
-    except Exception as e:
-        logger.error(f"Error during KnowledgeBase setup: {str(e)}")
-        return None
+        try:
+            vector_store = MilvusVectorStore(uri="milvus_demo.db", dim=1024, overwrite=True, output_fields=[])
+            
+            # Create a new KnowledgeBase instance for each document
+            kb = KnowledgeBase(vector_store=vector_store)  
+            
+            for doc in documents:
+                kb.add_document(doc)
+            
+            logger.info(f"Document {file_path} loaded into KnowledgeBase.")
+        except Exception as e:
+            logger.error(f"Error during KnowledgeBase setup: {str(e)}")
+            return None  # Or handle the error as needed
+
+    return kb  # Return the KnowledgeBase
