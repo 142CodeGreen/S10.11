@@ -18,7 +18,8 @@ def load_documents(file_paths):
     if not os.path.exists(kb_dir):
         os.makedirs(kb_dir)
 
-    file_paths = file_paths if isinstance(file_paths, list) else [file_paths]
+    # Convert file_paths to a tuple to make it hashable
+    file_paths = tuple(file_paths) if isinstance(file_paths, list) else (file_paths,)  
     
     documents = []
     for file_path in file_paths:
