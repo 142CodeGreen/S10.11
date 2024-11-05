@@ -1,10 +1,10 @@
 from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.actions.actions import ActionResult
-from nemoguardrails.kb.kb import KnowledgeBase
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 from doc_loader import load_documents  # This should import the function from the correct module
 from llama_index.core import Settings
+import os
 import logging
 
 # Configure logging
@@ -17,54 +17,44 @@ Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
 
 def template(question, context):
     """Constructs a prompt template for the RAG system."""
-    return f"""Answer user questions based on loaded documents. 
+    return f"""Answer user questions based on loaded documents.
 
     {context}
 
-    1. You do not make up a story. 
+    1. You do not make up a story.
     2. Keep your answer as concise as possible.
     3. Should not answer any out-of-context USER QUESTION.
 
     USER QUESTION: ```{question}```
     Answer in markdown:"""
 
-async def rag(context: dict, llm: NVIDIA, kb: KnowledgeBase) -> ActionResult:
-    user_message = context.get("last_user_message", "")
+
+async def rag(context: dict, llm: NVIDIA, query_engine):
     context_updates = {}
+    user_message = context.get('last_user_message', '')
 
     try:
-        # Use KnowledgeBase to search for relevant chunks
-        chunks = await kb.search_relevant_chunks(user_message)
-        relevant_chunks = "\n".join([chunk["body"] for chunk in chunks])
-        
+        print(f"query_engine in rag(): {query_engine}")
+        response = await query_engine.aquery(user_message)
+        relevant_chunks = response.response
         print(f"Query: {user_message}")  # Print the query
-        print(f"Relevant Chunks: {relevant_chunks}")  # Print the retrieved context
-        
-        # Update context with the relevant chunks
+        print(f"Relevant Chunks: {relevant_chunks}")  # Print the context
         context_updates["relevant_chunks"] = relevant_chunks
-        context_updates["last_bot_prompt"] = template(user_message, relevant_chunks)
-        
-        # Generate answer using the LLM with the constructed prompt
-        answer = await llm.apredict(context_updates["last_bot_prompt"])
+        context_updates["_last_bot_prompt"] = template(user_message, relevant_chunks)
+        answer = await llm.apredict(context_updates["_last_bot_prompt"])
         context_updates["last_bot_message"] = answer
-        
         return ActionResult(return_value=answer, context_updates=context_updates)
-    
+
     except Exception as e:
         error_message = f"Unexpected error in RAG process: {str(e)}"
         logger.error(error_message)
         return ActionResult(return_value="An unexpected error occurred while processing your query.", context_updates={})
 
 def init(app: LLMRails):
-    global kb
-    try:
-        # Load documents and initialize KnowledgeBase
-        kb = load_documents("./Config/kb")
-        
-        if kb is None:
-            raise ValueError("Failed to initialize KnowledgeBase from loaded documents.")
-        
-        app.register_action(rag, name="generate_answer")
-    except Exception as e:
-        logger.error(f"Initialization error: {str(e)}")
-        # Handle initialization failure as per your application's requirements
+    global query_engine
+    _, query_engine = load_documents("./Config/kb")  # Load documents and create query engine
+    if query_engine is None:
+        logger.error("Failed to create query engine.")
+        return
+
+    app.register_action(rag, name="generate_answer")
