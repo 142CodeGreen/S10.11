@@ -26,9 +26,7 @@ def upload_documents(file_objs):
     global kb
     try:
         if file_objs:
-            kb = None  # Initialize kb
-            for file_obj in file_objs:
-                kb = load_documents(file_obj.name)  # Load each file individually
+            kb = load_documents([file_obj.name for file_obj in file_objs])  # Pass the list of file names
             if kb is None:
                 raise ValueError("Failed to load any documents.")
             return "Documents uploaded and KnowledgeBase initialized successfully."
@@ -37,7 +35,7 @@ def upload_documents(file_objs):
     except Exception as e:
         logger.error(f"Error uploading documents or initializing KnowledgeBase: {str(e)}")
         return f"Error: {str(e)}"
-
+        
 async def load_documents_and_setup(file_objs):
     global rails, kb
     try:
