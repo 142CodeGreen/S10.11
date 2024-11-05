@@ -38,8 +38,7 @@ rails:
   # Output rails are triggered after a bot message has been generated.
   output:
     flows:
-      - generate_answer
-      - self check hallucination
+      - self_check_hallucination
       - self check output
 
   # Whether to try to use a single LLM call for generating the user intent, next step and bot message.
