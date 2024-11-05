@@ -22,12 +22,13 @@
       Question: Should the user message be blocked (Yes or No)?
       Answer:
 
-
   - task: self_check_hallucination
     content: |
-      You are given a task to identify if the hypothesis is in agreement with the context below.
-      You will only use the contents of the context and not rely on external knowledge.
-      Answer with yes/no. "context": {{ paragraph }} "hypothesis": {{ statement }} "agreement":
+      Based on the provided context, does the answer accurately reflect the information in the documents? 
+      Answer with "yes" or "no".
+      "context": {{ context }} 
+      "answer": {{ answer }}  # This uses the $answer variable from the flow
+      "agreement": 
 
 
   - task: self_check_output
@@ -50,3 +51,9 @@
 
       Question: Should the message be blocked (Yes or No)?
       Answer:
+
+  #- task: self_check_hallucination
+  #  content: |
+  #    You are given a task to identify if the hypothesis is in agreement with the context below.
+  #    You will only use the contents of the context and not rely on external knowledge.
+  #    Answer with yes/no. "context": {{ paragraph }} "hypothesis": {{ statement }} "agreement":
