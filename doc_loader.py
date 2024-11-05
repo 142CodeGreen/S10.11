@@ -2,13 +2,14 @@ import os
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext, Settings
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.vector_stores.milvus import MilvusVectorStore
+from nemoguardrails.kb.kb import KnowledgeBase
 import shutil
 import logging
 from functools import lru_cache  # For in-memory caching
 
-
 logger = logging.getLogger(__name__)
 Settings.text_splitter = SentenceSplitter(chunk_size=400, chunk_overlap=20)
+
 
 @lru_cache(maxsize=1)
 def cached_load_documents(file_paths):
@@ -31,30 +32,36 @@ def cached_load_documents(file_paths):
     if not documents:
         logger.warning("No documents found or loaded.")
     return documents
-    
+
 def load_documents(file_paths):
     """
-    Load documents, create or retrieve an index, and setup a query engine.
+    Load documents into a KnowledgeBase using Milvus for vector storage.
 
     Args:
     file_paths (str or list): Path(s) to document file(s) or directory(ies).
 
     Returns:
-    tuple: A tuple containing the VectorStoreIndex and the QueryEngine.
+    KnowledgeBase: An instance of KnowledgeBase with loaded documents.
     """
     documents = cached_load_documents(file_paths)
-    
+
     if not documents:
-        return None, None
+        return None
 
     try:
+        # Initialize MilvusVectorStore
         vector_store = MilvusVectorStore(uri="milvus_demo.db", dim=1024, overwrite=True, output_fields=[])
-        storage_context = StorageContext.from_defaults(vector_store=vector_store)
-        index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
-        query_engine = index.as_query_engine(similarity_top_k=20, streaming=True)
-
-        logger.info("Index and Query Engine created or retrieved from cache.")
-        return index, query_engine
+        
+        # Create or initialize KnowledgeBase with Milvus
+        kb = KnowledgeBase(vector_store=vector_store)
+        
+        # Add documents to KnowledgeBase
+        for doc in documents:
+            # Assuming KnowledgeBase has an add_document method that interacts with Milvus
+            kb.add_document(doc)
+        
+        logger.info("Documents loaded into KnowledgeBase with Milvus vector store.")
+        return kb
     except Exception as e:
-        logger.error(f"Error during index creation: {str(e)}")
-        return None, None
+        logger.error(f"Error during KnowledgeBase creation with Milvus: {str(e)}")
+        return None
