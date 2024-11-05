@@ -55,9 +55,9 @@ async def rag(context: dict, llm: NVIDIA, query_engine):
         logger.error(error_message)
         return ActionResult(return_value="An unexpected error occurred while processing your query.", context_updates={})
 
-async def init(app: LLMRails):
+def init(app: LLMRails):
     global index, query_engine
-    index, query_engine = await load_documents("./Config/kb")
+    index, query_engine = load_documents("./Config/kb")
     if index is None or query_engine is None:
         logger.error("Failed to load documents or create query engine.")
         return
