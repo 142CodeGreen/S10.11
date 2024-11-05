@@ -27,7 +27,9 @@ def upload_documents(file_objs):
     global query_engine, index
     try:
         if file_objs:
-            index, query_engine = load_documents(file_objs)
+            for file_obj in file_objs:  # Iterate over the files
+                index, query_engine = load_documents(file_obj)  # Load each file individually
+            #index, query_engine = load_documents(file_objs)
             return "Documents uploaded and query engine initialized successfully."
         else:
             raise ValueError("No files provided for upload.")
@@ -35,6 +37,22 @@ def upload_documents(file_objs):
         logger.error(f"Error uploading documents or initializing query engine: {str(e)}")
         return f"Error: {str(e)}"
 
+
+@lru_cache(maxsize=1)
+def load_documents(file_path):  # Change argument to file_path (singular)
+    global index, query_engine
+    
+    kb_dir = "./Config/kb"
+    if not os.path.exists(kb_dir):
+        os.makedirs(kb_dir)
+
+    documents = []
+    if os.path.isfile(file_path):
+        documents.extend(SimpleDirectoryReader(input_files=[file_path]).load_data())
+        shutil.copy2(file_path, kb_dir)  # Copy the single file
+    elif os.path.isdir(file_path):
+        documents.extend(SimpleDirectoryReader(input_dir=file_path).load_data())
+       
 async def load_documents_and_setup(file_objs):
     global rails, query_engine, index
     try:
@@ -44,7 +62,7 @@ async def load_documents_and_setup(file_objs):
             rails = LLMRails(config)
 
             # --- Load the index from cache or create it ---
-            index, query_engine = load_documents(tuple(file_objs))  # Convert to tuple here
+            index, query_engine = load_documents(file_objs)
             init(rails)  # Initialize rails with the new document context
             return f"Document Upload Status: {upload_status}\nRails Initialization Status: Rails initiated successfully."
         else:
