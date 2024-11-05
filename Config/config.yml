@@ -31,15 +31,9 @@ knowledge_base:
 
 rails:
   # Input rails are invoked when new input from the user is received.
-  input:
-    flows:
-      - self check input
-    
-  # Output rails are triggered after a bot message has been generated.
   output:
     flows:
       - self check hallucination
-      - self check output
 
   # Whether to try to use a single LLM call for generating the user intent, next step and bot message.
   dialog:
