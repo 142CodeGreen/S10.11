@@ -41,7 +41,7 @@ async def rag(context: dict, llm: NVIDIA, query_engine):
 
     try:
         print(f"Query: {message}")  # Print the query
-        response = await query_engine.aquery(message)
+        response = query_engine.aquery(message)
         relevant_chunks = response.response
         print(f"Relevant Chunks: {relevant_chunks}")  # Print the context
         context_updates["relevant_chunks"] = relevant_chunks
