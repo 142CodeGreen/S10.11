@@ -33,7 +33,7 @@ async def load_documents(file_paths):
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
     index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
 
-    query_engine = await index.as_query_engine(similarity_top_k=20, streaming=True)
+    query_engine = index.as_query_engine(similarity_top_k=20, streaming=True)
     # --- Test Query ---
     test_query = "This is a test query"  # Replace with a relevant query
     test_response = query_engine.query(test_query)
