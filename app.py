@@ -6,6 +6,7 @@ from nemoguardrails import RailsConfig, LLMRails
 from llama_index.core import Settings
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
+from functools import lru_cache
 from doc_loader import load_documents
 from Config.actions import init
 import logging
