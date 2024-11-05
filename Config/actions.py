@@ -1,10 +1,10 @@
 from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.actions.actions import ActionResult
+from nemoguardrails.kb.kb import KnowledgeBase
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 from doc_loader import load_documents  # This should import the function from the correct module
 from llama_index.core import Settings
-import os
 import logging
 
 # Configure logging
@@ -28,21 +28,26 @@ def template(question, context):
     USER QUESTION: ```{question}```
     Answer in markdown:"""
 
-
-async def rag(context: dict, llm: NVIDIA, query_engine):
+async def rag(context: dict, llm: NVIDIA, kb: KnowledgeBase) -> ActionResult:
+    user_message = context.get("last_user_message", "")
     context_updates = {}
-    user_message = context.get('last_user_message', '')
-    
+
     try:
-        print(f"query_engine in rag(): {query_engine}")
-        response = await query_engine.aquery(user_message)
-        relevant_chunks = response.response
+        # Use KnowledgeBase to search for relevant chunks
+        chunks = await kb.search_relevant_chunks(user_message)
+        relevant_chunks = "\n".join([chunk["body"] for chunk in chunks])
+        
         print(f"Query: {user_message}")  # Print the query
-        print(f"Relevant Chunks: {relevant_chunks}")  # Print the context
+        print(f"Relevant Chunks: {relevant_chunks}")  # Print the retrieved context
+        
+        # Update context with the relevant chunks
         context_updates["relevant_chunks"] = relevant_chunks
-        context_updates["_last_bot_prompt"] = template(user_message, relevant_chunks)
-        answer = await llm.apredict(context_updates["_last_bot_prompt"])
+        context_updates["last_bot_prompt"] = template(user_message, relevant_chunks)
+        
+        # Generate answer using the LLM with the constructed prompt
+        answer = await llm.apredict(context_updates["last_bot_prompt"])
         context_updates["last_bot_message"] = answer
+        
         return ActionResult(return_value=answer, context_updates=context_updates)
     
     except Exception as e:
@@ -51,10 +56,15 @@ async def rag(context: dict, llm: NVIDIA, query_engine):
         return ActionResult(return_value="An unexpected error occurred while processing your query.", context_updates={})
 
 def init(app: LLMRails):
-    global query_engine
-    _, query_engine = load_documents("./Config/kb")  # Load documents and create query engine
-    if query_engine is None:
-        logger.error("Failed to create query engine.")
-        return
-
-    app.register_action(rag, name="generate_answer")
+    global kb
+    try:
+        # Load documents and initialize KnowledgeBase
+        kb = load_documents("./Config/kb")
+        
+        if kb is None:
+            raise ValueError("Failed to initialize KnowledgeBase from loaded documents.")
+        
+        app.register_action(rag, name="generate_answer")
+    except Exception as e:
+        logger.error(f"Initialization error: {str(e)}")
+        # Handle initialization failure as per your application's requirements
