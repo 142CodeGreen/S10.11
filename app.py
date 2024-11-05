@@ -1,13 +1,11 @@
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="llama_index")
 
-import os
 import gradio as gr
 from nemoguardrails import RailsConfig, LLMRails
-from llama_index.core import Settings, SimpleDirectoryReader
+from llama_index.core import Settings
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
-from functools import lru_cache
 from doc_loader import load_documents
 from Config.actions import init
 import logging
@@ -39,21 +37,6 @@ def upload_documents(file_objs):
         logger.error(f"Error uploading documents or initializing query engine: {str(e)}")
         return f"Error: {str(e)}"
 
-
-@lru_cache(maxsize=1)
-def load_documents(file_path):  # Change argument to file_path (singular)
-    global index, query_engine
-    
-    kb_dir = "./Config/kb"
-    if not os.path.exists(kb_dir):
-        os.makedirs(kb_dir)
-
-    documents = []
-    if os.path.isfile(file_path):
-        documents.extend(SimpleDirectoryReader(input_files=[file_path]).load_data())
-        shutil.copy2(file_path, kb_dir)  # Copy the single file
-    elif os.path.isdir(file_path):
-        documents.extend(SimpleDirectoryReader(input_dir=file_path).load_data())
        
 async def load_documents_and_setup(file_objs):
     global rails, query_engine, index
@@ -65,6 +48,9 @@ async def load_documents_and_setup(file_objs):
 
             # --- Load the index from cache or create it ---
             index, query_engine = load_documents(file_objs)
+            if index is None or query_engine is None:
+                logger.error("Failed to load documents or create query engine.")
+                return
             init(rails)  # Initialize rails with the new document context
             return f"Document Upload Status: {upload_status}\nRails Initialization Status: Rails initiated successfully."
         else:
