@@ -30,6 +30,7 @@ def template(question, context):
 
 
 async def rag(context: dict, llm: NVIDIA, query_engine):
+    print(f"query_engine in rag(): {query_engine}")
     context_updates = {}
     message = context.get('last_user_message', '')
 
