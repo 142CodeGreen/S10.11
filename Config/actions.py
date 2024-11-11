@@ -38,7 +38,7 @@ def template(question, context, history):
 @action(is_system_action=True)
 async def rag(context: Dict):
     print("rag() function called!")
-    index = context.get('index', get_index())
+    index = get_index()
     if index is None:
         return ActionResult(
             return_value="Index not available.",
