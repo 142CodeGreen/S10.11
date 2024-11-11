@@ -74,3 +74,15 @@ def init(app: LLMRails, index=None):
     app.index = index
     app.register_action(retrieve_relevant_chunks, name="retrieve_relevant_chunks")
     logger.info("retrieve_relevant_chunks action registered successfully.")
+
+    # Sample query to test the query engine
+    if index:
+        try:
+            query_engine = index.as_query_engine()
+            sample_query = "What are the main products offered by the company?"
+            response = query_engine.query(sample_query)
+            logger.info(f"Sample query result: {response.response}")
+        except Exception as e:
+            logger.error(f"Error during sample query in init: {str(e)}")
+    else:
+        logger.warning("No index provided to init function for sample query testing.")
