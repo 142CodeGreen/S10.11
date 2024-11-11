@@ -121,19 +121,23 @@ def start_gradio():
             inputs=[file_input],
             outputs=[load_output, gr.Textbox(label="Index Status")]
         ).then(
+            lambda: "Initializing guardrails...", None, gr.Textbox(label="Guardrail Status")
+        ).then(
             initialize_guardrails,
             outputs=[gr.Textbox(label="Guardrail Status")]
+        ).then(
+            lambda: "Guardrails initialization complete.", None, gr.Textbox(label="Guardrail Status")
         )
 
         #load_btn.click(
         #    async_load_and_index,
         #    inputs=[file_input],
-        #    outputs=[load_output, gr.Textbox(label="Index Status"), gr.State()]
+        #    outputs=[load_output, gr.Textbox(label="Index Status")]
         #).then(
-        #    initialize_guardrails, 
-        #    inputs=[gr.State()],  # Remove the extra Textbox input
+        #    initialize_guardrails,
         #    outputs=[gr.Textbox(label="Guardrail Status")]
         #)
+
         
         # Function to clear documents is no longer needed; use the small "x" sign at the file input
 
