@@ -81,12 +81,11 @@ async def rag(context: Dict):
             context_updates={}
         )
 
-def init(app: LLMRails, index_provider):
+def init(app: LLMRails):
     app.register_action(
         rag, 
-        name="rag",
-        context_fn=index_provider
+        name="rag"
     )
-
+    
 #def init(app: LLMRails, index):  # Add index as a parameter
 #    app.register_action(rag, name="rag", context_fn=lambda: {"index": index})
