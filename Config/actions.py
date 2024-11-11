@@ -81,12 +81,4 @@ async def rag(context: Dict):
         )
 
 def init(app: LLMRails):
-    index_provider = lambda: get_index()
-    
-    # You might need to use a different method to set this up,
-    # depending on how the new API works
-    app.some_method_to_set_index_provider(index_provider)
     app.register_action(rag, name="rag")
-    
-#def init(app: LLMRails, index):  # Add index as a parameter
-#    app.register_action(rag, name="rag", context_fn=lambda: {"index": index})
