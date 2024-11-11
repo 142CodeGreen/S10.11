@@ -25,7 +25,7 @@ def template(question, context, history):
     {history_str}
 
     Current Context:
-    {context}
+    {relevant_chunks_str}   #{context}
 
     1. Use the information above to answer the question.
     2. You do not make up a story.
@@ -33,7 +33,7 @@ def template(question, context, history):
     4. Should not answer any out-of-context USER QUESTION.
 
     USER QUESTION: ```{question}```
-    Answer in markdown:"""
+    Answer:"""
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
