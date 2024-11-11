@@ -20,7 +20,6 @@ Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-
 @action(is_system_action=True)
 async def retrieve_relevant_chunks(context: Dict):
     logger.info("retrieve_relevant_chunks() function called!")
@@ -33,46 +32,34 @@ async def retrieve_relevant_chunks(context: Dict):
             return_value="Index not available.",
             context_updates={}
         )
-    else:
-        logger.info(f"Index type: {type(index)}")
 
     # Retrieve question from context
     question = context.get('last_user_message', '')
     logger.info(f"User question: {question}")
 
-    # Retrieve history from context
-    history = context.get('history', [])
-    logger.info(f"Conversation history: {history}")
-
     try:
         # Create query engine from index
-        logger.info("Creating query engine")
         query_engine = index.as_query_engine()
 
-        # Retrieve relevant contexts using the query_engine
+        # Directly query the index for an answer without constructing a prompt
         logger.info(f"Querying index with: {question}")
         response = await query_engine.aquery(question)
 
-        # Log retrieved documents
-        logger.info(f"Number of source nodes retrieved: {len(response.source_nodes)}")
-        doc_context = "\n".join([node.text for node in response.source_nodes])
-        logger.info(f"Document context:\n{doc_context[:200]}...")  # Log first 200 characters
+        # Log the response metadata
+        logger.info(f"Number of source nodes for the response: {len(response.source_nodes)}")
 
-        # Generate the response using the LLM directly without a template
-        logger.info("Generating response with LLM")
-        prompt = f"Answer the following question using the provided context:\n\nContext:\n{doc_context}\n\nQuestion: {question}"
-        answer = await Settings.llm.complete(prompt)
-        logger.info(f"LLM response: {answer.text[:200]}...")  # Log first 200 characters of the answer
+        # Extract the answer from the response
+        answer = response.response
 
         # Update context with new information
         context_updates = {
-            "relevant_chunks": doc_context,
-            "history": history + [(question, answer.text)]
+            "relevant_chunks": "\n".join([node.text for node in response.source_nodes]),
+            "history": context.get('history', []) + [(question, answer)]
         }
 
         logger.info("Returning result from retrieve_relevant_chunks()")
         return ActionResult(
-            return_value=answer.text,
+            return_value=answer,
             context_updates=context_updates
         )
     except Exception as e:
@@ -81,7 +68,7 @@ async def retrieve_relevant_chunks(context: Dict):
             return_value="An error occurred while processing your query.",
             context_updates={}
         )
-
+        
 def init(app: LLMRails, index=None):
     # Store the index somewhere accessible, like setting it as an attribute of the app
     app.index = index
