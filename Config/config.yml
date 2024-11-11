@@ -35,7 +35,7 @@ rails:
   input:
     flows:
       - self check input
-      - retrieve_relevant_chunks
+      #- retrieve_relevant_chunks
 
   # Output rails are triggered after a bot message has been generated.
   output:
