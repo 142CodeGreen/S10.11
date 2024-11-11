@@ -1,13 +1,61 @@
-define flow generate_answer  # New flow for RAG
+define user express greeting
+  "Hi"
+  "Hello!"
+  "Hey there!"
+
+define bot express greeting
+  "Hey there!"
+
+define bot ask how are you
+  "How are you feeling today?"
+
+define user express feeling good
+  "I'm feeling good"
+  "Good"
+  "Perfect"
+
+define user express feeling bad
+  "Not so good"
+  "Bad"
+  "Sad"
+
+define flow
+  user express greeting
+  bot express greeting
+  bot ask how are you
+
+  when user express feeling good
+    bot express positive emotion
+  else when user express feeling bad
+    bot express empathy
+
+define flow
+  user ask general question
+  bot response to general question
+
+define flow self check input
+  $allowed = execute self_check_input
+
+  if not $allowed
+    bot refuse to respond
+    stop
+
+define flow user_query
   user ...
-  $answer = execute rag()  # This calls your rag() function
+  $answer = execute rag()
+  $check_hallucination = True
   bot $answer
 
-define flow self_check_hallucination
-  user ...
-  $answer = execute flow generate_answer  # Call the RAG flow
-  $check_hallucination = True 
-  bot $answer
+
+define flow self check output
+  $allowed = execute self_check_output
+
+  if not $allowed
+    bot refuse to respond
+    stop
+
+define bot refuse to respond
+  "I'm sorry, I can't respond to that."
 
 #define flow self check hallucinations
 #  user ...
@@ -15,13 +63,16 @@ define flow self_check_hallucination
 #  $check_hallucination = True
 #  bot $answer
 
-#define flow generate_answer  # New flow for RAG
+#define flow self check hallucination
 #  user ...
-#  $answer = execute rag()  # This calls your rag() function
+#  $answer = execute rag()
+#  $check_hallucination = True
 #  bot $answer
 
-#define flow self_check_hallucination
-#  user ...
-#  $answer = execute flow generate_answer  # Call the RAG flow
-#  $check_hallucination = True 
-#  bot $answer
+#$context = $answer.context  # Assuming rag() returns a dictionary
+#  $statement = $answer.statement
+#  $check_result = execute self_check_hallucination(paragraph=$context, statement=$statement)
+#  if $check_result.agreement == "yes":
+#    bot $answer
+#  else:
+#    bot "I'm not sure about that. Let me check."
