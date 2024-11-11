@@ -149,23 +149,4 @@ def start_gradio():
     demo.queue().launch(share=True, debug=True)
 
 if __name__ == "__main__":
-    app = LLMRails()
-    init(app)
-    print("Application initialized")
     start_gradio()
-
-    # Or if you want to run the test when the script is run directly:
-    #def test_initialize_guardrails():
-        # Create a storage context with the correct persist_dir
-    #    storage_context = StorageContext.from_defaults(persist_dir="./storage") 
-
-        # Load the index using the storage context
-    #    mock_index = VectorStoreIndex.from_documents([], storage_context=storage_context)
-
-    #    result, _ = initialize_guardrails(mock_index)
-    #    assert result == "Guardrails initialized successfully.", "Initialization failed"
-
-    #test_initialize_guardrails()
-
-    #Note: Commenting out the actual app run to prevent Gradio from launching while testing:
-    #start_gradio()
