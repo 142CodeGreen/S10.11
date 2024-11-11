@@ -1,7 +1,6 @@
 #actions.py
 
-#from doc_index import get_index
-#from doc_index import doc_index
+from doc_index import get_index
 
 from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.actions.actions import ActionResult
