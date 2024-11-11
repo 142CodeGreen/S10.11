@@ -1,70 +1,98 @@
+#actions.py
+
+from doc_index import get_index
+#from doc_index import doc_index
+
 from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.actions.actions import ActionResult
-from nemoguardrails.kb.kb import KnowledgeBase
+from nemoguardrails.actions.actions import action
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
-from doc_loader import load_documents  # This should import the function from the correct module
 from llama_index.core import Settings
-import logging
+import asyncio
+from typing import Dict
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# Set LLM and Embedding Model
+# Settings for LLM and embedding model
 Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
 Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
 
-def template(question, context):
-    """Constructs a prompt template for the RAG system."""
-    return f"""Answer user questions based on loaded documents. 
 
+def template(question, context, history):
+    """Constructs a prompt template for the RAG system, including conversation history."""
+    history_str = "\n".join([f"Q: {q}\nA: {a}" for q, a in history])
+    return f"""Answer user questions based on loaded documents and past conversation.
+
+    Past conversation:
+    {history_str}
+
+    Current Context:
     {context}
 
-    1. You do not make up a story. 
-    2. Keep your answer as concise as possible.
-    3. Should not answer any out-of-context USER QUESTION.
+    1. Use the information above to answer the question.
+    2. You do not make up a story.
+    3. Keep your answer as concise as possible.
+    4. Should not answer any out-of-context USER QUESTION.
 
     USER QUESTION: ```{question}```
     Answer in markdown:"""
 
-async def rag(context: dict, llm: NVIDIA, kb: KnowledgeBase) -> ActionResult:
-    user_message = context.get("last_user_message", "")
-    context_updates = {}
+@action(is_system_action=True)
+async def rag(context: Dict):
+    print("rag() function called!")
+    index = get_index()  # Get the pre-existing index
+    #index = context.get('index')  # Get the index from the context
+    
+    if index is None:
+        return ActionResult(
+            return_value=f"Index not available. {status}",
+            context_updates={}
+        )
+
+    question = context.get('last_user_message', '')
+    history = context.get('history', [])
 
     try:
-        # Use KnowledgeBase to search for relevant chunks
-        chunks = await kb.search_relevant_chunks(user_message)
-        relevant_chunks = "\n".join([chunk["body"] for chunk in chunks])
-        
-        print(f"Query: {user_message}")  # Print the query
-        print(f"Relevant Chunks: {relevant_chunks}")  # Print the retrieved context
-        
-        # Update context with the relevant chunks
-        context_updates["relevant_chunks"] = relevant_chunks
-        context_updates["last_bot_prompt"] = template(user_message, relevant_chunks)
-        
-        # Generate answer using the LLM with the constructed prompt
-        answer = await llm.apredict(context_updates["last_bot_prompt"])
-        context_updates["last_bot_message"] = answer
-        
-        return ActionResult(return_value=answer, context_updates=context_updates)
-    
+        # Create query engine from global_index
+        query_engine = index.as_query_engine()
+
+        # Retrieve relevant contexts using the query_engine
+        response = await query_engine.aquery(question)
+
+        # Create context from retrieved documents
+        doc_context = "\n".join([node.text for node in response.source_nodes])
+
+        # Use the template to form the prompt including history
+        prompt = template(question, doc_context, history)
+
+        # Generate the response using the LLM (Assuming LLM is configured in Settings)
+        answer = await Settings.llm.complete(prompt)
+
+        # Update context with new information
+        context_updates = {
+            "relevant_chunks": doc_context,
+            "history": history + [(question, answer.text)]  # Update history
+        }
+
+        return ActionResult(
+            return_value=answer.text,
+            context_updates=context_updates
+        )
     except Exception as e:
-        error_message = f"Unexpected error in RAG process: {str(e)}"
-        logger.error(error_message)
-        return ActionResult(return_value="An unexpected error occurred while processing your query.", context_updates={})
+        print(f"Error in rag(): {e}")
+        return ActionResult(
+            return_value="An error occurred while processing your query.",
+            context_updates={}
+        )
 
 def init(app: LLMRails):
-    global kb
-    try:
-        # Load documents and initialize KnowledgeBase
-        kb = load_documents("./Config/kb")
-        
-        if kb is None:
-            raise ValueError("Failed to initialize KnowledgeBase from loaded documents.")
-        
-        app.register_action(rag, name="generate_answer")
-    except Exception as e:
-        logger.error(f"Initialization error: {str(e)}")
-        # Handle initialization failure as per your application's requirements
+    app.register_action(
+        rag, 
+        name="rag"
+    )
+    #    context_fn=lambda: {"index": index}  # Use context_fn for in-memory index
+    #)
+        #fn=lambda  messages, **kwargs: asyncio.run(rag({"index": index, "messages": messages, **kwargs}))  # Pass index here
+    #)
+
+#def init(app: LLMRails, index):  # Add index as a parameter
+#    app.register_action(rag, name="rag", context_fn=lambda: {"index": index})
