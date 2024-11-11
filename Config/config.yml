@@ -35,9 +35,8 @@ rails:
   input:
     flows:
       - self check input
-      - flow: user_query
-        - action: rag
-    
+      - user_query
+
   # Output rails are triggered after a bot message has been generated.
   output:
     flows:
