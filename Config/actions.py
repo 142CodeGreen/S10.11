@@ -16,7 +16,7 @@ Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
 Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
 
 
-def template(question, relevant_chunks, history):
+def template(question, context, history):
     """Constructs a prompt template for the RAG system, including conversation history."""
     history_str = "\n".join([f"Q: {q}\nA: {a}" for q, a in history])
     return f"""Answer user questions based on loaded documents and past conversation.
@@ -25,7 +25,7 @@ def template(question, relevant_chunks, history):
     {history_str}
 
     Current Context:
-    {relevant_chunks_str}
+    {context}
 
     1. Use the information above to answer the question.
     2. You do not make up a story.
