@@ -81,7 +81,6 @@ async def rag(context: Dict):
         )
 
 def init(app: LLMRails):
-    from doc_index import get_index
     index_provider = lambda: get_index()
     
     # You might need to use a different method to set this up,
