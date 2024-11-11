@@ -24,7 +24,7 @@ Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
 global_index = None
 
 async def doc_index(file_paths, storage_context=None):
-    global index
+    global global_index
     try:
         logger.debug("Starting document indexing process.")
 
@@ -85,8 +85,15 @@ async def doc_index(file_paths, storage_context=None):
         logger.error(f"Error during indexing: {e}")
         return None, f"Failed to index documents: {str(e)}"
 
+def wait_for_index(timeout=10):
+    import time
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if global_index is not None:
+            return global_index
+        time.sleep(0.1)
+    return None
+
 def get_index():
-    global global_index
-    if global_index is None:
-        logger.info("Index has not been created yet.")
-    return global_index
+    return wait_for_index()
+
