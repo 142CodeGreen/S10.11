@@ -1,6 +1,6 @@
 #actions.py
 
-from doc_index import get_index
+#from doc_index import get_index
 
 from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.actions.actions import ActionResult
@@ -45,7 +45,7 @@ async def rag(context: Dict):
     logger.info("rag() function called!")
     
     # Index check
-    index = get_index()
+    index = rails.index
     if index is None:
         logger.error("Index not available.")
         return ActionResult(
@@ -104,6 +104,7 @@ async def rag(context: Dict):
             context_updates={}
         )
 
-def init(app: LLMRails):
-    logger.info("init function is being called")
+def init(app: LLMRails, index=None):
+    # Store the index somewhere accessible, like setting it as an attribute of the app
+    app.index = index
     app.register_action(rag, name="rag")
