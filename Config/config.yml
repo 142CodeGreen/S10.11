@@ -40,8 +40,8 @@ rails:
   # Output rails are triggered after a bot message has been generated.
   output:
     flows:
-      - self check hallucination
       - self check output
+      - self check hallucination
 
 #actions:
 #  - type: custom
