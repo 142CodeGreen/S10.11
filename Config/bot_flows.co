@@ -40,7 +40,7 @@ define flow self check input
     bot refuse to respond
     stop
 
-define flow user_query
+define flow self check hallucinations
   user ...
   $answer = execute rag()
   $check_hallucination = True
@@ -76,3 +76,11 @@ define bot refuse to respond
 #    bot $answer
 #  else:
 #    bot "I'm not sure about that. Let me check."
+
+#define flow user_query
+#  user ...
+#  $answer = execute rag()
+#  $check_hallucination = True
+#  bot $answer
+
+
