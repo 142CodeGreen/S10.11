@@ -39,7 +39,7 @@ def template(question, context, history):
 @action(is_system_action=True)
 async def rag(context: Dict):
     print("rag() function called!")
-    index = index_provider()
+    index = context.get('index', get_index())
     if index is None:
         return ActionResult(
             return_value="Index not available.",
@@ -82,10 +82,13 @@ async def rag(context: Dict):
         )
 
 def init(app: LLMRails):
-    app.register_action(
-        rag, 
-        name="rag"
-    )
+    from doc_index import get_index
+    index_provider = lambda: get_index()
+    
+    # You might need to use a different method to set this up,
+    # depending on how the new API works
+    app.some_method_to_set_index_provider(index_provider)
+    app.register_action(rag, name="rag")
     
 #def init(app: LLMRails, index):  # Add index as a parameter
 #    app.register_action(rag, name="rag", context_fn=lambda: {"index": index})
