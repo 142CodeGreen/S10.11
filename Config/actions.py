@@ -4,7 +4,6 @@
 
 from nemoguardrails import LLMRails, RailsConfig
 from nemoguardrails.actions.actions import ActionResult
-from nemoguardrails.actions.actions import action
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 from llama_index.core import Settings
@@ -41,7 +40,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 @action(is_system_action=True)
-async def retrieve_relevant_chunks(context: Dict): #change rag to retrieve_relevant_chunks
+async def rag(context: Dict): #change rag to retrieve_relevant_chunks
     logger.info("rag() function called!")
     
     # Index check
@@ -107,6 +106,6 @@ async def retrieve_relevant_chunks(context: Dict): #change rag to retrieve_relev
 def init(app: LLMRails, index=None):
     # Store the index somewhere accessible, like setting it as an attribute of the app
     app.index = index
-    #app.register_action(rag, name="rag")
-    app.register_action(retrieve_relevant_chunks, name="retrieve_relevant_chunks")
+    app.register_action(rag, name="rag")
+    #app.register_action(retrieve_relevant_chunks, name="retrieve_relevant_chunks")
     logger.info("RAG action registered successfully.")
