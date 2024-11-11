@@ -48,28 +48,22 @@ async def initialize_guardrails():
     try:
         config = RailsConfig.from_path("./Config")
         global rails
+        
+        # Fetch the index using get_index()
+        index = get_index()
+        
+        if index is None:
+            logger.error("Index is not available during guardrails initialization.")
+            return "Guardrails not initialized: No index available.", None
+
         rails = LLMRails(config)
-        #index = await doc_index()  # Assuming you fetch or create the index here
-        init(rails) #, index)
+        init(rails, lambda: index)  # Pass an index provider function
+        
         return "Guardrails initialized successfully.", None
     except Exception as e:
         logger.error(f"Error initializing guardrails: {e}")
         return f"Guardrails not initialized due to error: {str(e)}", None
 
-    #print(f"Index received in initialize_guardrails: {index}")
-    #if index is None:
-    #    logger.error("Index is None before initialization.")
-    #    return "Guardrails not initialized: Index is None", None
-    #if isinstance(index, VectorStoreIndex):
-    #config = RailsConfig.from_path("./Config")
-    #global rails
-    #rails = LLMRails(config)
-    #init(rails)  # Ensure init function can handle the index
-    #return "Guardrails initialized successfully.", rails
-    #else:
-    #    error_message = "Guardrails not initialized: Unexpected index type."
-    #    logger.error(error_message)
-    #    return error_message, None
 
 async def stream_response(query, history):
     global rails  # Use global to access the rails variable
