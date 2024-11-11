@@ -14,8 +14,8 @@ pinned: false
 
 1. Clone the repository:
 ```
-git clone https://github.com/142CodeGreen/S10.7.git
-cd S10.7
+git clone https://github.com/142CodeGreen/S10.11.git
+cd S10.11
 ```
 
 2. Create the Virtual Environment:
