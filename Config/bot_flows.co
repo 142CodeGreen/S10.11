@@ -1,38 +1,3 @@
-define user express greeting
-  "Hi"
-  "Hello!"
-  "Hey there!"
-
-define bot express greeting
-  "Hey there!"
-
-define bot ask how are you
-  "How are you feeling today?"
-
-define user express feeling good
-  "I'm feeling good"
-  "Good"
-  "Perfect"
-
-define user express feeling bad
-  "Not so good"
-  "Bad"
-  "Sad"
-
-define flow
-  user express greeting
-  bot express greeting
-  bot ask how are you
-
-  when user express feeling good
-    bot express positive emotion
-  else when user express feeling bad
-    bot express empathy
-
-define flow
-  user ask general question
-  bot response to general question
-
 define flow self check input
   $allowed = execute self_check_input
 
@@ -41,7 +6,7 @@ define flow self check input
     stop
 
 define flow self check hallucinations
-  user ...
+  #user ...
   $answer = execute rag()
   $check_hallucination = True
   bot $answer
@@ -82,5 +47,41 @@ define bot refuse to respond
 #  $answer = execute rag()
 #  $check_hallucination = True
 #  bot $answer
+
+#define user express greeting
+#  "Hi"
+#  "Hello!"
+#  "Hey there!"
+
+#define bot express greeting
+#  "Hey there!"
+
+#define bot ask how are you
+#  "How are you feeling today?"
+
+#define user express feeling good
+#  "I'm feeling good"
+#  "Good"
+#  "Perfect"
+
+#define user express feeling bad
+#  "Not so good"
+#  "Bad"
+#  "Sad"
+
+#define flow
+#  user express greeting
+#  bot express greeting
+#  bot ask how are you
+
+#  when user express feeling good
+#    bot express positive emotion
+#  else when user express feeling bad
+#    bot express empathy
+
+#define flow
+#  user ask general question
+#  bot response to general question
+
 
 
