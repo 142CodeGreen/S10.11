@@ -107,6 +107,6 @@ async def retrieve_relevant_chunks(context: Dict): #change rag to retrieve_relev
 def init(app: LLMRails, index=None):
     # Store the index somewhere accessible, like setting it as an attribute of the app
     app.index = index
-    app.register_action(rag, name="rag")
+    #app.register_action(rag, name="rag")
     app.register_action(retrieve_relevant_chunks, name="retrieve_relevant_chunks")
     logger.info("RAG action registered successfully.")
