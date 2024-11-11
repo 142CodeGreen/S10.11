@@ -1,15 +1,18 @@
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="llama_index")
+# app.py
 
 import gradio as gr
-from nemoguardrails import RailsConfig, LLMRails
-from llama_index.core import Settings
+from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext, Settings
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.vector_stores.milvus import MilvusVectorStore
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 from doc_loader import load_documents
+from doc_index import doc_index
 from Config.actions import init
+from nemoguardrails import LLMRails, RailsConfig
 import logging
 import asyncio
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -18,85 +21,154 @@ logger = logging.getLogger(__name__)
 # Set LLM and Embedding Model
 Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
 Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
+Settings.text_splitter = SentenceSplitter(chunk_size=400, chunk_overlap=20)
 
-rails = None  # Global rails variable
-kb = None  # Global KnowledgeBase variable
+kb_dir = "./Config/kb"
 
-def upload_documents(file_objs):
-    global kb
+rails = None  # Global variable for rails, if needed
+
+async def do_async_load_and_index(file_paths):
     try:
-        if file_objs:
-            kb = load_documents([file_obj.name for file_obj in file_objs])  # Pass the list of file names
-            if kb is None:
-                raise ValueError("Failed to load any documents.")
-            return "Documents uploaded and KnowledgeBase initialized successfully."
-        else:
-            raise ValueError("No files provided for upload.")
-    except Exception as e:
-        logger.error(f"Error uploading documents or initializing KnowledgeBase: {str(e)}")
-        return f"Error: {str(e)}"
+        # Load documents
+        load_result = load_documents(*file_paths)
         
-async def load_documents_and_setup(file_objs):
-    global rails, kb
-    try:
-        upload_status = upload_documents(file_objs)
-        if "initialized successfully" in upload_status:
-            config = RailsConfig.from_path("./Config")
-            rails = LLMRails(config)
-            
-            if kb is None:
-                logger.error("Failed to initialize KnowledgeBase.")
-                return f"Document Upload Status: {upload_status}\nRails Initialization Status: KnowledgeBase initialization failed."
-            
-            init(rails, kb)  # Initialize rails with the KnowledgeBase
-            return f"Document Upload Status: {upload_status}\nRails Initialization Status: Rails initiated successfully."
-        else:
-            return f"Document Upload Status: {upload_status}"
+        # Indexing process
+        status = await doc_index(file_paths)
+        
+        return load_result, status
     except Exception as e:
-        logger.error(f"Error in document loading and setup: {str(e)}")
-        return f"Error in document loading and setup: {str(e)}"
+        logger.error(f"Exception occurred while indexing documents: {e}")
+        return "Error loading documents", "Error indexing documents"
 
-async def stream_response(message, history):
-    if rails is None or kb is None:
-        yield history + [("Please initialize the system first by loading documents and initiating rails.", None)]
-        return
-    
-    user_message = {"role": "user", "content": message}
+async def async_load_and_index(file_paths):
+    load_result, index_status = await do_async_load_and_index(file_paths)
+    return load_result, index_status
+
+async def initialize_guardrails():
     try:
-        result = await rails.generate_async(messages=[user_message], kb=kb)
+        config = RailsConfig.from_path("./Config")
+        global rails
+        rails = LLMRails(config)
+        #index = await doc_index()  # Assuming you fetch or create the index here
+        init(rails) #, index)
+        return "Guardrails initialized successfully.", None
+    except Exception as e:
+        logger.error(f"Error initializing guardrails: {e}")
+        return f"Guardrails not initialized due to error: {str(e)}", None
+
+    #print(f"Index received in initialize_guardrails: {index}")
+    #if index is None:
+    #    logger.error("Index is None before initialization.")
+    #    return "Guardrails not initialized: Index is None", None
+    #if isinstance(index, VectorStoreIndex):
+    #config = RailsConfig.from_path("./Config")
+    #global rails
+    #rails = LLMRails(config)
+    #init(rails)  # Ensure init function can handle the index
+    #return "Guardrails initialized successfully.", rails
+    #else:
+    #    error_message = "Guardrails not initialized: Unexpected index type."
+    #    logger.error(error_message)
+    #    return error_message, None
+
+async def stream_response(query, history):
+    global rails  # Use global to access the rails variable
+    if not rails:
+        logger.error("Guardrails not initialized.")
+        yield [("System", "Guardrails not initialized. Please load documents first.")]
+        return
+
+    try:
+        user_message = {"role": "user", "content": query}
+        result = await rails.generate_async(messages=[user_message])
+
         if isinstance(result, dict):
             if "content" in result:
-                yield history + [(message, result["content"])]
+                history.append((query, result["content"]))
             else:
-                yield history + [(message, str(result))]
+                history.append((query, str(result)))
         else:
             if isinstance(result, str):
-                yield history + [(message, result)]
-            else:
+                history.append((query, result))
+            elif hasattr(result, '__iter__'):
                 for chunk in result:
                     if isinstance(chunk, dict) and "content" in chunk:
-                        yield history + [(message, chunk["content"])]
+                        history.append((query, chunk["content"]))
+                        yield history
                     else:
-                        yield history + [(message, chunk)]
+                        history.append((query, chunk))
+                        yield history
+            else:
+                logger.error(f"Unexpected result type: {type(result)}")
+                history.append((query, "Unexpected response format."))
+
+        yield history
+
     except Exception as e:
         logger.error(f"Error in stream_response: {str(e)}")
-        yield history + [("An error occurred while processing your query.", None)]
+        history.append(("An error occurred while processing your query.", None))
+        yield history
 
 def start_gradio():
     with gr.Blocks() as demo:
         gr.Markdown("# RAG Chatbot for PDF Files")
+
         file_input = gr.File(label="Select files to upload", file_count="multiple")
         load_btn = gr.Button("Click to Load Documents")
+        clear_docs_btn = gr.Button("Clear Documents")
         load_output = gr.Textbox(label="Load Status")
         chatbot = gr.Chatbot()
         msg = gr.Textbox(label="Enter your question")
-        clear = gr.Button("Clear")
+        clear_chat_btn = gr.Button("Clear Chat History")
+        clear_all_btn = gr.Button("Clear All")
 
-        load_btn.click(load_documents_and_setup, inputs=[file_input], outputs=[load_output])
+        load_btn.click(
+            async_load_and_index,
+            inputs=[file_input],
+            outputs=[load_output, gr.Textbox(label="Index Status")]
+        ).then(
+            initialize_guardrails,
+            outputs=[gr.Textbox(label="Guardrail Status")]
+        )
+
+        #load_btn.click(
+        #    async_load_and_index,
+        #    inputs=[file_input],
+        #    outputs=[load_output, gr.Textbox(label="Index Status"), gr.State()]
+        #).then(
+        #    initialize_guardrails, 
+        #    inputs=[gr.State()],  # Remove the extra Textbox input
+        #    outputs=[gr.Textbox(label="Guardrail Status")]
+        #)
+        
+        # Function to clear documents is no longer needed; use the small "x" sign at the file input
+
+        clear_docs_btn.click(
+            lambda: ([], None, "Documents cleared"),
+            inputs=[],
+            outputs=[file_input, load_output]
+        )
+
         msg.submit(stream_response, inputs=[msg, chatbot], outputs=[chatbot])
-        clear.click(lambda: None, None, chatbot, queue=False)
+        clear_chat_btn.click(lambda: [], outputs=[chatbot])
+        clear_all_btn.click(lambda: ([], None, "Documents and chat cleared"), inputs=[], outputs=[chatbot, file_input, load_output])
 
     demo.queue().launch(share=True, debug=True)
 
 if __name__ == "__main__":
     start_gradio()
+    # Or if you want to run the test when the script is run directly:
+    #def test_initialize_guardrails():
+        # Create a storage context with the correct persist_dir
+    #    storage_context = StorageContext.from_defaults(persist_dir="./storage") 
+
+        # Load the index using the storage context
+    #    mock_index = VectorStoreIndex.from_documents([], storage_context=storage_context)
+
+    #    result, _ = initialize_guardrails(mock_index)
+    #    assert result == "Guardrails initialized successfully.", "Initialization failed"
+
+    #test_initialize_guardrails()
+
+    #Note: Commenting out the actual app run to prevent Gradio from launching while testing:
+    #start_gradio()
