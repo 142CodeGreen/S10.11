@@ -39,15 +39,12 @@ def template(question, context, history):
 @action(is_system_action=True)
 async def rag(context: Dict):
     print("rag() function called!")
-    index = get_index()  # Get the pre-existing index
-    #index = context.get('index')  # Get the index from the context
-    
+    index = index_provider()
     if index is None:
         return ActionResult(
-            return_value=f"Index not available. {status}",
+            return_value="Index not available.",
             context_updates={}
         )
-
     question = context.get('last_user_message', '')
     history = context.get('history', [])
 
@@ -84,15 +81,12 @@ async def rag(context: Dict):
             context_updates={}
         )
 
-def init(app: LLMRails):
+def init(app: LLMRails, index_provider):
     app.register_action(
         rag, 
-        name="rag"
+        name="rag",
+        context_fn=index_provider
     )
-    #    context_fn=lambda: {"index": index}  # Use context_fn for in-memory index
-    #)
-        #fn=lambda  messages, **kwargs: asyncio.run(rag({"index": index, "messages": messages, **kwargs}))  # Pass index here
-    #)
 
 #def init(app: LLMRails, index):  # Add index as a parameter
 #    app.register_action(rag, name="rag", context_fn=lambda: {"index": index})
