@@ -5,14 +5,14 @@ define flow self check input
     bot refuse to respond
     stop
 
-#define flow retrieve_relevant_chunks
-#  user ...
-#  $answer = execute rag()
-#  bot $answer
+define flow retrieve_relevant_chunks
+  user ...
+  $answer = execute retrieve_relevant_chunks()
+  bot $answer
 
 define flow self check hallucinations
   #user ...
-  $answer = execute rag()
+  $answer = execute retrieve_relevant_chunks()
   $check_hallucination = True
   bot $answer
 
