@@ -105,4 +105,5 @@ async def rag(context: Dict):
         )
 
 def init(app: LLMRails):
+    logger.info("init function is being called")
     app.register_action(rag, name="rag")
