@@ -39,7 +39,7 @@ def template(question, relevant_chunks, history):
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-@action(is_system_action=True)
+#@action(is_system_action=True)
 async def retrieve_relevant_chunks(context: Dict):
     logger.info("rag() function called!")
     
