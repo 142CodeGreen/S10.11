@@ -149,7 +149,11 @@ def start_gradio():
     demo.queue().launch(share=True, debug=True)
 
 if __name__ == "__main__":
+    app = LLMRails()
+    init(app)
+    print("Application initialized")
     start_gradio()
+
     # Or if you want to run the test when the script is run directly:
     #def test_initialize_guardrails():
         # Create a storage context with the correct persist_dir
