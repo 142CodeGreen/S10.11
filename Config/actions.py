@@ -25,7 +25,7 @@ def template(question, context, history):
     {history_str}
 
     Current Context:
-    {relevant_chunks_str}   #{context}
+    {context}
 
     1. Use the information above to answer the question.
     2. You do not make up a story.
@@ -40,11 +40,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 @action(is_system_action=True)
-async def rag(context: Dict): #change rag to retrieve_relevant_chunks
+async def retrieve_relevant_chunks(context: Dict):
     logger.info("rag() function called!")
     
     # Index check
-    index = rails.index
+    index = context.get('index')
+    #index = rails.index
     if index is None:
         logger.error("Index not available.")
         return ActionResult(
@@ -106,6 +107,6 @@ async def rag(context: Dict): #change rag to retrieve_relevant_chunks
 def init(app: LLMRails, index=None):
     # Store the index somewhere accessible, like setting it as an attribute of the app
     app.index = index
-    app.register_action(rag, name="rag")
-    #app.register_action(retrieve_relevant_chunks, name="retrieve_relevant_chunks")
+    #app.register_action(rag, name="rag")
+    app.register_action(retrieve_relevant_chunks, name="retrieve_relevant_chunks")
     logger.info("RAG action registered successfully.")
