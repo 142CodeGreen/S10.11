@@ -21,7 +21,7 @@ Settings.llm = NVIDIA(model="meta/llama-3.1-8b-instruct")
 Settings.text_splitter = SentenceSplitter(chunk_size=400)
 Settings.embed_model = NVIDIAEmbedding(model="NV-Embed-QA", truncate="END")
 
-#index = None
+global_index = None
 
 async def doc_index(file_paths, storage_context=None):
     global index
@@ -77,6 +77,7 @@ async def doc_index(file_paths, storage_context=None):
 
         # Return the index
         logger.info(f"Index created: {index}")
+        global_index = index
         return index, "Documents indexed successfully"
         #return index         # "Documents indexed successfully"
 
@@ -90,4 +91,4 @@ def get_index():
         logger.info("No index found or it hasn't been created yet.")
         return None
     logger.info(f"Returning existing index.")
-    return index
+    return global_index
