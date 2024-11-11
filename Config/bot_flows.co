@@ -10,12 +10,6 @@ define flow retrieve_relevant_chunks
   $answer = execute retrieve_relevant_chunks()
   bot $answer
 
-define flow self check hallucinations
-  #user ...
-  $answer = execute retrieve_relevant_chunks()
-  $check_hallucination = True
-  bot $answer
-
 
 define flow self check output
   $allowed = execute self_check_output
@@ -23,6 +17,13 @@ define flow self check output
   if not $allowed
     bot refuse to respond
     stop
+
+define flow self check hallucinations
+  #user ...
+  $answer = execute retrieve_relevant_chunks()
+  $check_hallucination = True
+  bot $answer
+
 
 define bot refuse to respond
   "I'm sorry, I can't respond to that."
