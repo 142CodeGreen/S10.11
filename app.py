@@ -52,7 +52,7 @@ async def initialize_guardrails():
             return "Guardrails not initialized: No index available.", None
 
         rails = LLMRails(config, verbose=True)
-        init(rails)  # Make sure init() is called after index creation
+        init(rails, index)  # Make sure init() is called after index creation
         
         return "Guardrails initialized successfully.", None
     except Exception as e:
