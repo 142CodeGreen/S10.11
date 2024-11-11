@@ -108,3 +108,4 @@ def init(app: LLMRails, index=None):
     # Store the index somewhere accessible, like setting it as an attribute of the app
     app.index = index
     app.register_action(rag, name="rag")
+    logger.info("RAG action registered successfully.")
