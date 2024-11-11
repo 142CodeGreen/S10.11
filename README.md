@@ -8,34 +8,43 @@ sdk_version: 5.4.0
 app_file: app.py
 pinned: false
 ---
-
-# S1.2
-
-This is a practise of including Nemo Guardrails on top of S1 repository with adjusted code. It's a simple RAG chatbot that allows upload of file then conduct Q&A using NVIDIA NIM.  The RAG orchestration is via LlamaIndex and GPU-accelerated Milvus Vector Store, using NVIDIA embeddings. 
-
-This workbook includes indexing for loaded document in the doc_loader.py file.
+# S10.11
 
 ## Setup
 
 1. Clone the repository:
 ```
-git clone https://github.com/142CodeGreen/S1.2.git
-cd S1.2
+git clone https://github.com/142CodeGreen/S10.7.git
+cd S10.7
 ```
 
-2. Install the required packages:
+2. Create the Virtual Environment:
+```
+python -m venv venv
+source venv/bin/activate
+```
+
+3. Install the required packages:
 ```
 pip install --upgrade -r requirements.txt
 ```
 
-3. Export API keys. NVIDIA_API_KEY is for NVIDIA NIM, while OpenAI API Key is needed for Nemo Guardrails. 
+4. Export API keys. NVIDIA_API_KEY is for NVIDIA NIM, while OpenAI API Key is needed for Nemo Guardrails. 
 ```
 export NVIDIA_API_KEY="your-api-key-here"
 echo $NVIDIA_API_KEY
 
+export OPENAI_API_KEY="your-openai-key-here"
+echo $OPENAI_API_KEY
 ```
 
-4. Run the app.py:
+5. Run the app.py:
 ```
 python3 app.py
 ```
+
+6. Deactivate virtual environment when finished:
+```
+deactivate
+```
+
