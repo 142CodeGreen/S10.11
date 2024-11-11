@@ -29,12 +29,8 @@ rails = None  # Global variable for rails, if needed
 
 async def do_async_load_and_index(file_paths):
     try:
-        # Load documents
         load_result = load_documents(*file_paths)
-        
-        # Indexing process
-        status = await doc_index(file_paths)
-        
+        index, status = await doc_index(file_paths)
         return load_result, status
     except Exception as e:
         logger.error(f"Exception occurred while indexing documents: {e}")
@@ -49,21 +45,20 @@ async def initialize_guardrails():
         config = RailsConfig.from_path("./Config")
         global rails
         
-        # Fetch the index using get_index()
+        # Ensure index exists or has been created
         index = get_index()
-        
         if index is None:
             logger.error("Index is not available during guardrails initialization.")
             return "Guardrails not initialized: No index available.", None
 
         rails = LLMRails(config)
-        init(rails, lambda: index)  # Pass an index provider function
+        init(rails)  # Make sure init() is called after index creation
         
         return "Guardrails initialized successfully.", None
     except Exception as e:
         logger.error(f"Error initializing guardrails: {e}")
         return f"Guardrails not initialized due to error: {str(e)}", None
-
+        
 
 async def stream_response(query, history):
     global rails  # Use global to access the rails variable
