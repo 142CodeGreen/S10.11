@@ -86,9 +86,7 @@ async def doc_index(file_paths, storage_context=None):
         return None, f"Failed to index documents: {str(e)}"
 
 def get_index():
-    global index
-    if index is None:
-        logger.info("No index found or it hasn't been created yet.")
-        return None
-    logger.info(f"Returning existing index.")
+    global global_index
+    if global_index is None:
+        logger.info("Index has not been created yet.")
     return global_index
