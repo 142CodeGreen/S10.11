@@ -2,7 +2,7 @@
 
 #from doc_index import get_index
 
-from nemoguardrails import LLMRails, RailsConfig
+from nemoguardrails import LLMRails #, RailsConfig
 from nemoguardrails.actions import action
 from nemoguardrails.actions.actions import ActionResult
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
