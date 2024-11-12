@@ -10,17 +10,7 @@ logger.setLevel(logging.INFO)  # Set the logging level
 
 @lru_cache(maxsize=8)
 def load_documents(*f_paths):
-    """
-    Converts PDF documents to Markdown format and saves them in the specified directory.
 
-    This function does not return any documents; instead, it saves them to disk and uses caching.
-
-    Args:
-    *f_paths (str): Variable length argument list of file paths.
-
-    Returns:
-    str: A status message indicating the success or failure of the conversion process.
-    """
     kb_dir = "./Config/kb"
     documents = []  # Initialize an empty list to store documents
     
