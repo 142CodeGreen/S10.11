@@ -35,12 +35,12 @@ rails:
   input:
     flows:
       - self check input
+      - self check hallucination
       #- retrieve_relevant_chunks
 
   # Output rails are triggered after a bot message has been generated.
   output:
     flows:
-      - self check hallucination
       - self check output
     
 actions:
