@@ -45,7 +45,7 @@ rails:
     
 actions:
   type: custom
-  name: 
+  name: retrieve_relevant_chunks
   return_type: ActionResult
 
   # Whether to try to use a single LLM call for generating the user intent, next step and bot message.
